@@ -221,6 +221,43 @@ requirejs(['Noise', 'Random',
 		return m;
 	}
 
+	function scatterSarsOnCanvas(canvas, settings) {
+		var dctx = canvas.getContext("2d");
+		var tc = document.createElement('canvas');
+		//var container = document.getElementById('list');
+		//container.appendChild(tc);
+		tc.width = 32;
+		tc.height = 32;
+		var radius = tc.width / 2;
+		var count = Math.round(canvas.width * canvas.height * settings.density * 0.005);
+		var ctx = tc.getContext("2d");
+		ctx.save();
+		dctx.save();
+		var grd;
+		var scaleFrom = 2 / tc.width;
+		var scaleTo = 4 / tc.width;
+
+		for (var i = 0; i < count; i++) {
+			var hue = prng();
+			var saturation = randomBetween(0.8, 1);
+			var lightness = randomBetween(0.8, 1);
+
+			ctx.clearRect(0, 0, tc.width, tc.height);
+			grd = ctx.createRadialGradient(radius, radius, radius * 0.1, radius, radius, radius);
+			grd.addColorStop(0, hsla(hue, saturation, lightness, 1));
+			grd.addColorStop(1, hsla(hue, saturation, lightness, 0));
+			ctx.fillStyle = grd;
+
+			var scale = randomBetween(scaleFrom, scaleTo);
+			ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+			ctx.fillRect(0, 0, tc.width, tc.height);
+			dctx.drawImage(tc, prng() * canvas.width, prng() * canvas.height);
+		}
+		ctx.restore();
+		dctx.restore();
+	}
+
 	function generateNebulaDensity(canvas, s) {
 		var m = new Float32Array(canvas.width * canvas.height);
 		for (var x = 0, j = 0; x < canvas.height; x++) {
@@ -244,6 +281,7 @@ requirejs(['Noise', 'Random',
 
 	// --------------------------------------------
 	function generateBrightStar(name, c, settings) {
+		var container = document.getElementById('list');
 		var starRadiusRatio = settings.radiusRatio;
 		var starRadius = Math.max(1, settings.realWidth * settings.radiusRatio);
 		var flareWidth = Math.max(2, Math.pow(Math.log(starRadius), 4));
@@ -252,24 +290,42 @@ requirejs(['Noise', 'Random',
 
 		var aScale = flareWidth / settings.realWidth;
 		var bScale = settings.brightness;
-		var aPos = settings.radius - (flareWidth / 2);
-		var bPos = settings.radius - (settings.realWidth * bScale * 0.5);
-		console.log('settings.realWidth', settings.realWidth, 'flareWidth', flareWidth, 'aScale', aScale, 'starRadius', starRadius);
+
+		var flareCount = Math.floor(6 * starRadius);
 
 		ctx.save();
-		ctx.setTransform(aScale, 0, 0, bScale, aPos, bPos);
-		grd = ctx.createRadialGradient(settings.radius, settings.radius, starRadius, settings.radius, settings.radius, settings.radius);
+
+		grd = ctx.createRadialGradient(0, 0, starRadius, 0, 0, settings.radius);
 		grd.addColorStop(0, hsla(settings.h, 1, 0.9, 0.5 * settings.brightness));
 		grd.addColorStop(1, hsla(settings.h, 1, 0.8, 0));
 		ctx.fillStyle = grd;
-		ctx.fillRect(0, 0, c.width, c.height);
 
-		ctx.setTransform(bScale, 0, 0, aScale, bPos, aPos)
-		//ctx.rotate(30);
-		ctx.fillRect(0, 0, c.width, c.height);
+		ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+		ctx.scale(aScale, bScale);
+		ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
+
+		ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+		ctx.rotate(Math.PI / 2);
+		ctx.scale(aScale, bScale);
+		ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
+
+		ctx.mozImageSmoothingEnabled = false;
+		ctx.webkitImageSmoothingEnabled = false;
+		ctx.msImageSmoothingEnabled = false;
+		ctx.imageSmoothingEnabled = false;
+
+		for (var i = 0; i < flareCount; i++) {
+			ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+			ctx.rotate(Math.PI * randomBetween(0, 2));
+			var scaleScale = randomBetween(0.1, 0.4);
+			ctx.scale(aScale * 0.5, bScale * scaleScale);
+			ctx.globalAlpha = (i + 1) / flareCount;
+			ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
+		}
+		ctx.globalAlpha = 1;
+		ctx.restore();
 
 		ctx.setTransform(1, 0, 0, 1, 0, 0);
-
 		grd = ctx.createRadialGradient(settings.radius, settings.radius, starRadius, settings.radius, settings.radius, settings.radius * settings.brightness);
 		grd.addColorStop(0, hsla(settings.h, 1, 0.8, 0.1 * settings.brightness));
 		grd.addColorStop(1, hsla(settings.h, 1, 0.7, 0));
@@ -331,21 +387,21 @@ requirejs(['Noise', 'Random',
 		settings.pixleScale = 1;
 
 		if (typeof(queryVars['pixleScale']) !== 'undefined') {
-			settings.pixleScale = queryVars['pixleScale'];
+			settings.pixleScale = parseInt(queryVars['pixleScale']);
 		}
 		if (settings.pixleScale == undefined || settings.pixleScale == '') {
 			settings.pixleScale = 1;
 		}
 
 		if (typeof(queryVars['width']) !== 'undefined') {
-			settings.width = queryVars['width'];
+			settings.width = parseInt(queryVars['width']);
 		}
 		if (settings.width == undefined || settings.width == '') {
 			settings.width = window.innerWidth;
 		}
 
 		if (typeof(queryVars['height']) !== 'undefined') {
-			settings.height = queryVars['height'];
+			settings.height = parseInt(queryVars['height']);
 		}
 		if (settings.height == undefined || settings.height == '') {
 			settings.height = Math.floor(window.innerHeight * 0.9);
@@ -360,12 +416,12 @@ requirejs(['Noise', 'Random',
 		var tNebulaCount = Math.round(randomBetween(1, 5));
 
 		if (typeof(queryVars['nebulaCount']) !== 'undefined') {
-			settings.nebulaCount = queryVars['nebulaCount'];
+			settings.nebulaCount = parseInt(queryVars['nebulaCount']);
 		}
-		if (settings.nebulaCount == undefined || settings.nebulaCount == '') {
+		if (settings.nebulaCount == undefined) {
 			settings.nebulaCount = tNebulaCount;
 		}
-	
+
 		settings.stars = {
 			density: randomBetween(0.01, 0.05),
 			brightness: randomBetween(0.1, 0.2)
@@ -396,12 +452,12 @@ requirejs(['Noise', 'Random',
 		var tBrightStarCount = Math.round(randomBetween(0, 8));
 
 		if (typeof(queryVars['brightStarCount']) !== 'undefined') {
-			settings.brightStarCount = queryVars['brightStarCount'];
+			settings.brightStarCount = parseInt(queryVars['brightStarCount']);
 		}
-		if (settings.brightStarCount == undefined || settings.brightStarCount == '') {
+		if (settings.brightStarCount == undefined) {
 			settings.brightStarCount = tBrightStarCount;
 		}
-	
+
 		for (var i = 1; i <= settings.brightStarCount; i++) {
 			var s = {
 				radius: Math.ceil(randomBetween(16, 256) / settings.pixleScale),
@@ -435,16 +491,12 @@ requirejs(['Noise', 'Random',
 	generateConfiguration(settings);
 
 	//lets grab the stle sheet rule
-
-	for (var i; i < document.styleSheets.length; i++) {
+	for (var i = 0; i < document.styleSheets.length; i++) {
 		var styleSheet = document.styleSheets[i];
-		for (var j; j < styleSheet.rules.length; j++) {
+		for (var j = 0; j < styleSheet.rules.length; j++) {
 			var cssStyleRule = styleSheet.rules[j];
-			console.log(cssStyleRule);
 			if (cssStyleRule.selectorText == '#list canvas') {
-
-				cssStyleRule.style.width = Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + brightStarCount)) + 'px';
-				i = document.styleSheets.length;
+				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount)) + 'px';
 				break;
 			}
 		}
@@ -459,9 +511,6 @@ requirejs(['Noise', 'Random',
 
 	output.style.width = settings.width + 'px';
 	output.style.height = settings.height + 'px';
-
-	settings.lWidth = Math.floor(window.innerWidth / 10) + 'px'; //(settings.width / (10 / settings.pixleScale)) + 'px';
-	settings.lHeight = Math.floor(window.innerHeight / 10) + 'px'; // (settings.height / (10 / settings.pixleScale)) + 'px';
 
 	var container = document.getElementById('list');
 
@@ -485,6 +534,7 @@ requirejs(['Noise', 'Random',
 	callbacks.push(function () {
 		l.stars = generateStars(c.stars, settings.stars);
 		colourArrayToCanvas(l.stars, c.stars);
+		scatterSarsOnCanvas(c.stars, settings.stars);
 		mixToCanvasToCanvas(c.stars, c.output);
 	});
 
