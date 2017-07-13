@@ -568,6 +568,9 @@ requirejs(['Noise', 'Random',
 		if (funk) {
 			funk();
 			setTimeout(execCallbacks, 100);
+		} else {
+			var spinner = document.getElementById("spinner");
+			spinner.style.display = 'none';
 		}
 	}
 	setTimeout(execCallbacks, 100);
