@@ -280,68 +280,71 @@ requirejs(['Noise', 'Random',
 	};
 
 	// --------------------------------------------
+
 	function generateBrightStar(name, c, settings) {
 		var container = document.getElementById('list');
-		var starRadiusRatio = settings.radiusRatio;
-		var starRadius = Math.max(1, settings.realWidth * settings.radiusRatio);
-		var flareWidth = Math.max(2, Math.pow(Math.log(starRadius), 4));
+
+		var flareWidth = settings.starRealRadius;//Math.max(1, Math.pow(Math.log(settings.starRealRadius), 4));
 		var ctx = c.getContext("2d");
 		var grd;
 
 		var aScale = flareWidth / settings.realWidth;
 		var bScale = settings.brightness;
 
-		var flareCount = Math.floor(6 * starRadius);
+		var flareCount = Math.floor(100);
+
+		var xCenter = Math.floor(settings.realWidth / 2);
+		var yCenter = Math.floor(settings.realHeight / 2);
 
 		ctx.save();
 
-		grd = ctx.createRadialGradient(0, 0, starRadius, 0, 0, settings.radius);
+		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius, 0, 0, settings.glowRealRadius);
 		grd.addColorStop(0, hsla(settings.h, 1, 0.9, 0.5 * settings.brightness));
 		grd.addColorStop(1, hsla(settings.h, 1, 0.8, 0));
 		ctx.fillStyle = grd;
 
-		ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
 		ctx.scale(aScale, bScale);
-		ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
+		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 
-		ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
 		ctx.rotate(Math.PI / 2);
 		ctx.scale(aScale, bScale);
-		ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
-
-		ctx.mozImageSmoothingEnabled = false;
-		ctx.webkitImageSmoothingEnabled = false;
-		ctx.msImageSmoothingEnabled = false;
-		ctx.imageSmoothingEnabled = false;
+		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 
 		for (var i = 0; i < flareCount; i++) {
-			ctx.setTransform(1, 0, 0, 1, settings.radius, settings.radius);
+			var sX = randomBetween(0.2, 0.8);
+			sX = Math.pow(sX,3);
+			var sY = Math.pow(1 - sX,3);
+			
+			ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
 			ctx.rotate(Math.PI * randomBetween(0, 2));
-			var scaleScale = randomBetween(0.1, 0.4);
-			ctx.scale(aScale * 0.5, bScale * scaleScale);
-			ctx.globalAlpha = (i + 1) / flareCount;
-			ctx.fillRect(-settings.radius, -settings.radius, c.width, c.height);
+			ctx.scale(aScale * (sY*2), bScale * sX);
+			ctx.globalAlpha = 0.7-sX;
+			ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 		}
+		
 		ctx.globalAlpha = 1;
 		ctx.restore();
 
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-		grd = ctx.createRadialGradient(settings.radius, settings.radius, starRadius, settings.radius, settings.radius, settings.radius * settings.brightness);
+		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
+		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius ,0, 0, settings.glowRealRadius);
 		grd.addColorStop(0, hsla(settings.h, 1, 0.8, 0.1 * settings.brightness));
 		grd.addColorStop(1, hsla(settings.h, 1, 0.7, 0));
 		ctx.fillStyle = grd;
-		ctx.fillRect(0, 0, c.width, c.height);
+		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 
-		grd = ctx.createRadialGradient(settings.radius, settings.radius, starRadius * 0.5, settings.radius, settings.radius, starRadius);
+		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius * 0.5, 0, 0, settings.starRealRadius);
 		grd.addColorStop(0, hsla(settings.h, 1, 1, 1));
 		grd.addColorStop(1, hsla(settings.h, 1, 0.8, 0));
 		ctx.fillStyle = grd;
-		ctx.fillRect(0, 0, c.width, c.height);
+		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 
 		ctx.restore();
 
 		return c;
 	}
+
 	// --------------------------------------------
 
 	function getQueryVars() {
@@ -404,7 +407,7 @@ requirejs(['Noise', 'Random',
 			settings.height = parseInt(queryVars['height']);
 		}
 		if (settings.height == undefined || settings.height == '') {
-			settings.height = Math.floor(window.innerHeight * 0.9);
+			settings.height = window.innerHeight;
 		}
 
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
@@ -412,7 +415,6 @@ requirejs(['Noise', 'Random',
 
 		seedRandom.setSeed(settings.seed);
 
-		//always do this so we dont throw out the random gen
 		var tNebulaCount = Math.round(randomBetween(1, 5));
 
 		if (typeof(queryVars['nebulaCount']) !== 'undefined') {
@@ -444,11 +446,11 @@ requirejs(['Noise', 'Random',
 				h: randomBetween(0, 1),
 				s: randomBetween(0.5, 1),
 				l: randomBetween(0, 1),
-				a: randomBetween(0, 1),
+				a: randomBetween(0.5, 1),
 			};
 		}
 
-		//always do this so we dont throw out the random gen
+		settings.brightStarSupersampling = 4;
 		var tBrightStarCount = Math.round(randomBetween(0, 8));
 
 		if (typeof(queryVars['brightStarCount']) !== 'undefined') {
@@ -460,14 +462,18 @@ requirejs(['Noise', 'Random',
 
 		for (var i = 1; i <= settings.brightStarCount; i++) {
 			var s = {
-				radius: Math.ceil(randomBetween(16, 256) / settings.pixleScale),
 				h: randomBetween(0, 1),
 				x: randomBetween(0, settings.realWidth),
 				y: randomBetween(0, settings.realHeight),
-				radiusRatio: randomBetween(0.004, 0.01),
 				brightness: randomBetween(0.1, 1),
 			};
-			s.realWidth = s.realHeight = s.radius * 2;
+			s.starRadius = randomBetween(1, 5);
+			s.glowRadius = randomBetween(16, 256);
+			s.radiusRatio = s.starRadius / s.glowRadius;
+
+			s.starRealRadius = Math.floor(s.starRadius / settings.pixleScale);
+			s.glowRealRadius = Math.floor(s.glowRadius / settings.pixleScale);
+			s.realWidth = s.realHeight = s.glowRealRadius * 2;
 			settings['brightStar' + i] = s;
 		}
 
@@ -490,7 +496,6 @@ requirejs(['Noise', 'Random',
 
 	generateConfiguration(settings);
 
-	//lets grab the stle sheet rule
 	for (var i = 0; i < document.styleSheets.length; i++) {
 		var styleSheet = document.styleSheets[i];
 		for (var j = 0; j < styleSheet.rules.length; j++) {
@@ -558,7 +563,7 @@ requirejs(['Noise', 'Random',
 			callbacks.push(function () {
 				var s = settings['brightStar' + x];
 				generateBrightStar(name, c['brightStar' + x], s);
-				mixToCanvasToCanvas(c['brightStar' + x], c.output, s.x - s.radius, s.y - s.radius);
+				mixToCanvasToCanvas(c['brightStar' + x], c.output, s.x - s.realWidth/2, s.y - s.realHeight/2);
 			});
 		})(i);
 	}
