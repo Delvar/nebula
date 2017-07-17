@@ -35,11 +35,10 @@ canvas {
 	bottom: 0px;
 	left: 0px;
 	max-height: 10%;
-	min-height: 10%;
 	max-width: 100%;
 	min-width: 100%;
 	width: 100%;
-	height: 10%;
+	height: inherit;
 }
 #list canvas {
 	width: auto;
@@ -58,6 +57,7 @@ canvas {
 	</style>
 </head>
 <body>
+
 	<div class="lds-css ng-scope loading" id="spinner">
 		<div class="lds-dual-ring">
 			<div></div>
@@ -164,6 +164,9 @@ canvas {
 		<canvas id="output"></canvas>
 	</div>
 	<div id="list"></div>
-	<div id="seed"></div><a href="unsafe:http://loading.io/spinner/double-ring">loading icon by loading.io</a>
+	<div id="seed"></div>
+	<div>
+		<a href="http://loading.io/spinner/double-ring">loading icon by loading.io</a>
+	</div>
 </body>
 </html>
