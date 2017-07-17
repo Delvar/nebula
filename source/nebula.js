@@ -141,11 +141,14 @@ requirejs(['Noise', 'Random',
 		context.putImageData(new ImageData(imageDataUint8, canvas.width, canvas.height), 0, 0);
 	}
 
-	function mixToCanvasToCanvas(sourceCanvas, destinationCanvas, x, y) {
-		x = x || 0;
-		y = y || 0;
-		var context = destinationCanvas.getContext("2d");
-		context.drawImage(sourceCanvas, x, y);
+	function mixToCanvasToCanvas(sourceCanvas, destinationCanvas) {
+		var ctx = destinationCanvas.getContext("2d");
+		ctx.save();
+		if (sourceCanvas.compositeOperation) {
+			ctx.globalCompositeOperation = sourceCanvas.compositeOperation;
+		}
+		ctx.drawImage(sourceCanvas, 0, 0);
+		ctx.restore();
 	}
 
 	function getDistortion(x, y, z, distortion, distortionScale, noisefunc) {
@@ -438,7 +441,7 @@ requirejs(['Noise', 'Random',
 		prng();
 		prng();
 
-		var tNebulaCount = Math.round(randomBetween(1, 1));
+		var tNebulaCount = Math.round(randomBetween(1, 4));
 
 		if (typeof(queryVars['nebulaCount']) !== 'undefined') {
 			settings.nebulaCount = parseInt(queryVars['nebulaCount']);
@@ -449,10 +452,10 @@ requirejs(['Noise', 'Random',
 
 		//for (var i = 1; i <= settings.nebulaCount; i++) {
 		var originalNebulaCount = settings.nebulaCount;
-		for (var i = 1, j = 1; j <= originalNebulaCount; i += 2, j += 1) {
+		for (var i = 1, j = 1; j <= originalNebulaCount; i += 1, j += 1) {
 
 			var nd = {
-				scale: randomBetween(100, 2000) / settings.pixleScale,
+				scale: randomBetween(400, 2000) / settings.pixleScale,
 				h: randomBetween(0.1, 0.5),
 				lacunarity: randomBetween(1.2, 2),
 				octaves: Math.floor(randomBetween(3, 8)),
@@ -472,10 +475,12 @@ requirejs(['Noise', 'Random',
 				a: randomBetween(0.5, 1),
 			};
 			settings['nebula' + i] = n;
+			//console.log(n.l, n.a, n.l * n.a, nd.scale,((n.l * n.a > 0.3) && nd.scale > 550));
 			//drop in dark matter on brighter lower detail nebula for more awesome details!
 			if ((n.l * n.a > 0.3) && nd.scale > 550) {
+				i = i + 1;
 				settings.nebulaCount++;
-				settings['nebulaDensity' + (i + 1)] = {
+				settings['nebulaDensity' + i] = {
 					scale: nd.scale,
 					h: 0.1,
 					lacunarity: 2,
@@ -487,11 +492,12 @@ requirejs(['Noise', 'Random',
 					distortion: nd.distortion,
 					distortionScale: nd.distortionScale,
 				};
-				settings['nebula' + (i + 1)] = {
-					h: n.h,
+				settings['nebula' + i] = {
+					h: randomBetween(0, 1),
 					s: 0.5,
-					l: 0.05,
+					l: randomBetween(0.005, 0.5),
 					a: 1,
+					compositeOperation: 'color-burn',
 				};
 			}
 		}
@@ -620,6 +626,7 @@ requirejs(['Noise', 'Random',
 			callbacks.push(function () {
 				l['nebula' + x] = generateNebula(c['nebula' + x], l['nebulaDensity' + x], settings['nebula' + x]);
 				colourArrayToCanvas(l['nebula' + x], c['nebula' + x]);
+				c['nebula' + x].compositeOperation=settings['nebula' + x].compositeOperation;
 				mixToCanvasToCanvas(c['nebula' + x], c.output);
 			});
 		})(i);
