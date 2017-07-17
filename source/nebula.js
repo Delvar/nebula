@@ -196,7 +196,7 @@ requirejs(['Noise', 'Random',
 			increment = (noisefunc(x, y, z) + offset) * pwr * value;
 			value += rmd * increment;
 		}
-		return value; ///(octaves*octaves);
+		return value;
 	}
 
 	function randomBetween(min, max) {
@@ -227,8 +227,6 @@ requirejs(['Noise', 'Random',
 	function scatterSarsOnCanvas(canvas, settings) {
 		var dctx = canvas.getContext("2d");
 		var tc = document.createElement('canvas');
-		//var container = document.getElementById('list');
-		//container.appendChild(tc);
 		tc.width = 32;
 		tc.height = 32;
 		var radius = tc.width / 2;
@@ -287,7 +285,7 @@ requirejs(['Noise', 'Random',
 	function generateBrightStar(name, c, settings) {
 		var container = document.getElementById('list');
 
-		var flareWidth = settings.starRealRadius; //Math.max(1, Math.pow(Math.log(settings.starRealRadius), 4));
+		var flareWidth = settings.starRealRadius;
 		var ctx = c.getContext("2d");
 		var grd;
 
@@ -315,14 +313,12 @@ requirejs(['Noise', 'Random',
 		ctx.scale(aScale, bScale);
 		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
 
-		//for (var i = 0; i < flareCount; i++) {
 		for (var i = 0; i < Math.PI; i = i + randomBetween(0.01, 0.2)) {
 			var sX = randomBetween(settings.radiusRatio, 0.8);
 			sX = Math.pow(sX, 3);
 			var sY = Math.pow(1 - sX, 3);
 
 			ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
-			//ctx.rotate(Math.PI * randomBetween(0, 2));
 			ctx.rotate(i);
 			ctx.scale(aScale * (sY * 2), bScale * sX);
 			ctx.globalAlpha = 0.7 - sX;
@@ -426,6 +422,9 @@ requirejs(['Noise', 'Random',
 		prng();
 		prng();
 		prng();
+		prng();
+		prng();
+		prng();
 
 		settings.stars = {
 			density: randomBetween(0.005, 0.05),
@@ -440,7 +439,9 @@ requirejs(['Noise', 'Random',
 		prng();
 		prng();
 		prng();
-
+		prng();
+		prng();
+		prng();
 		var tNebulaCount = Math.round(randomBetween(1, 4));
 
 		if (typeof(queryVars['nebulaCount']) !== 'undefined') {
@@ -450,28 +451,38 @@ requirejs(['Noise', 'Random',
 			settings.nebulaCount = tNebulaCount;
 		}
 
-		//for (var i = 1; i <= settings.nebulaCount; i++) {
 		var originalNebulaCount = settings.nebulaCount;
 		for (var i = 1, j = 1; j <= originalNebulaCount; i += 1, j += 1) {
-
+			seedRandom.setSeed(settings.seed + 'nebula' + i);
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
 			var nd = {
 				scale: randomBetween(400, 2000) / settings.pixleScale,
-				h: randomBetween(0.1, 0.5),
-				lacunarity: randomBetween(1.2, 2),
+				h: randomBetween(0.2, 2),
+				lacunarity: randomBetween(1.2, 3),
 				octaves: Math.floor(randomBetween(3, 8)),
 				dx: randomBetween(0, 500),
 				dy: randomBetween(0, 500),
-				exponent: 1 + prng() * 2,
-				offset: randomBetween(-0.2, 0.2),
+				exponent: randomBetween(2, 6),
+				offset: randomBetween(0, 0.5),
 				distortion: randomBetween(1, 2),
 				distortionScale: randomBetween(1, 2),
 			};
+
 			settings['nebulaDensity' + i] = nd;
 
 			var n = {
 				h: randomBetween(0, 1),
-				s: randomBetween(0.5, 1),
-				l: randomBetween(0, 1),
+				s: randomBetween(0.25, 1),
+				l: randomBetween(0.25, 1),
 				a: randomBetween(0.5, 1),
 			};
 			settings['nebula' + i] = n;
@@ -480,29 +491,45 @@ requirejs(['Noise', 'Random',
 			if ((n.l * n.a > 0.3) && nd.scale > 550) {
 				i = i + 1;
 				settings.nebulaCount++;
+				seedRandom.setSeed(settings.seed + 'darkMatter' + i);
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
+				prng();
 				settings['nebulaDensity' + i] = {
 					scale: nd.scale,
-					h: 0.1,
+					h: nd.h / 2,
 					lacunarity: 2,
-					octaves: 5,
+					octaves: 7,
 					dx: nd.dx,
 					dy: nd.dy,
-					exponent: nd.exponent*2,
+					exponent: nd.exponent * 2,
 					offset: nd.offset,
 					distortion: nd.distortion,
 					distortionScale: nd.distortionScale,
 				};
 				settings['nebula' + i] = {
-					h: randomBetween(0, 1),
+					h: (n.h + randomBetween(0, 0.75)) % 1,
 					s: 0.5,
-					l: randomBetween(0.005, 0.5),
-					a: 1,
-					compositeOperation: 'color-burn',
+					l: randomBetween(0, 0.25),
+					a: randomBetween(0.75, 1),
+					//compositeOperation: 'color-burn',
+					compositeOperation: 'multiply',
+					//compositeOperation: 'darken',
 				};
 			}
 		}
 
 		seedRandom.setSeed(settings.seed + 'brightStar');
+		prng();
+		prng();
+		prng();
 		prng();
 		prng();
 		prng();
@@ -524,6 +551,17 @@ requirejs(['Noise', 'Random',
 		settings.brightStarCount = 0;
 		var maxGlowRadius = 256;
 		for (var i = 1, tb = 0; tb <= settings.brightStarMaxTotalBrightness; i++) {
+			seedRandom.setSeed(settings.seed + 'brightStar' + i);
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
+			prng();
 			var s = {
 				h: randomBetween(0, 1),
 				x: Math.floor(randomBetween(0, settings.realWidth)),
@@ -542,7 +580,6 @@ requirejs(['Noise', 'Random',
 			var glowRadiusRatio = s.glowRadius / maxGlowRadius;
 			glowRadiusRatio = glowRadiusRatio * glowRadiusRatio * s.brightness;
 			tb += glowRadiusRatio;
-			//console.log(s.brightness, s.glowRadius, tb);
 
 			if (tb <= settings.brightStarMaxTotalBrightness) {
 				settings['brightStar' + i] = s;
@@ -626,7 +663,7 @@ requirejs(['Noise', 'Random',
 			callbacks.push(function () {
 				l['nebula' + x] = generateNebula(c['nebula' + x], l['nebulaDensity' + x], settings['nebula' + x]);
 				colourArrayToCanvas(l['nebula' + x], c['nebula' + x]);
-				c['nebula' + x].compositeOperation=settings['nebula' + x].compositeOperation;
+				c['nebula' + x].compositeOperation = settings['nebula' + x].compositeOperation;
 				mixToCanvasToCanvas(c['nebula' + x], c.output);
 			});
 		})(i);
