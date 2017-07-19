@@ -9,7 +9,8 @@ require.config({
 });
 
 requirejs(['Noise', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Random/SeedRandom'],
+		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Random/SeedRandom',
+		'Noise/Blender/TwoD/FastVoroni'],
 	function (Noise, Random) {
 
 	seedRandom = new Random.SeedRandom();
@@ -151,6 +152,10 @@ requirejs(['Noise', 'Random',
 		ctx.restore();
 	}
 
+	// --------------------------------------------
+	// -- 3d Noise, generaly looks better but is far slower.
+	// --------------------------------------------
+
 	function getDistortion(x, y, z, distortion, distortionScale, noisefunc) {
 		var rv1,
 		rv2,
@@ -171,17 +176,23 @@ requirejs(['Noise', 'Random',
 		increment,
 		rmd;
 		var i;
-		var pwHL = Math.pow(lacunarity, -H);
-		var pwr = pwHL; /* starts with i=1 instead of 0 */
 
 		var d = getDistortion(x, y, z, distortion, distortionScale, distortfunk);
 		/* first unscaled octave of function; later octaves are scaled */
 		value = offset + noisefunc(d.x, d.y, d.z);
+
+		if (value < 0.0001) {
+			return 0;
+		}
+
+		var pwHL = Math.pow(lacunarity, -H);
+		var pwr = pwHL; /* starts with i=1 instead of 0 */
+
 		x *= lacunarity;
 		y *= lacunarity;
 		z *= lacunarity;
-
-		for (i = 1; i < Math.floor(octaves); i++) {
+		//octaves = Math.floor(octaves);
+		for (i = 1; i < octaves; i++) {
 			var d = getDistortion(x, y, z, distortion, distortionScale, distortfunk);
 			increment = (noisefunc(d.x, d.y, d.z) + offset) * pwr * value;
 			value += increment;
@@ -191,13 +202,81 @@ requirejs(['Noise', 'Random',
 			z *= lacunarity;
 		}
 
-		rmd = octaves - Math.floor(octaves);
+		rmd = octaves - octaves;
 		if (rmd != 0.0) {
 			increment = (noisefunc(x, y, z) + offset) * pwr * value;
 			value += rmd * increment;
 		}
 		return value;
 	}
+
+	function generateNebulaDensity(canvas, s, fast) {
+		var m = new Float32Array(canvas.width * canvas.height);
+		for (var x = 0, j = 0; x < canvas.height; x++) {
+			for (var y = 0; y < canvas.width; y++, j++) {
+				if (fast === 0) {
+					m[j] = Math.pow(nebulaDensityNoise(s.dx + x / s.scale, s.dy + y / s.scale, 0, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.voronoi_F1, s.distortion, s.distortionScale, Noise.perlin3), s.exponent);
+				} else if (fast === 1) {
+					m[j] = Math.pow(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.TwoD.FastVoronoi_F1, s.distortion, s.distortionScale, Noise.perlin2), s.exponent);
+				} else if (fast === 2) {
+					m[j] = Math.pow(Math.sqrt(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.TwoD.FastVoronoi_Squared_F1, s.distortion, s.distortionScale, Noise.perlin2)), s.exponent+1);
+				} else {
+					m[j] = Math.pow(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.perlin2, s.distortion, s.distortionScale, Noise.perlin2), s.exponent);
+				}
+			}
+		}
+		return m;
+	}
+
+	// --------------------------------------------
+	// -- 2d Noise, Runs far faster!
+	// --------------------------------------------
+
+	function getDistortion2d(x, y, distortion, distortionScale, noisefunc) {
+		return {
+			x: x + noisefunc((x + 13.5) * distortionScale, (y + 13.5) * distortionScale) * distortion,
+			y: y + noisefunc((x) * distortionScale, (y) * distortionScale) * distortion,
+		};
+	}
+
+	function nebulaDensityNoise2d(x, y, H, lacunarity, octaves, offset, noisefunc, distortion, distortionScale, distortfunk) {
+		var value,
+		increment,
+		rmd;
+		var i;
+
+		var d = getDistortion2d(x, y, distortion, distortionScale, distortfunk);
+		/* first unscaled octave of function; later octaves are scaled */
+		value = offset + noisefunc(d.x, d.y);
+
+		if (value < 0.0001) {
+			return 0;
+		}
+
+		var pwHL = Math.pow(lacunarity, -H);
+		var pwr = pwHL; /* starts with i=1 instead of 0 */
+
+		x *= lacunarity;
+		y *= lacunarity;
+		//octaves = Math.floor(octaves);
+		for (i = 1; i < octaves; i++) {
+			var d = getDistortion2d(x, y, distortion, distortionScale, distortfunk);
+			increment = (noisefunc(d.x, d.y) + offset) * pwr * value;
+			value += increment;
+			pwr *= pwHL;
+			x *= lacunarity;
+			y *= lacunarity;
+		}
+
+		rmd = octaves - octaves;
+		if (rmd != 0.0) {
+			increment = (noisefunc(x, y) + offset) * pwr * value;
+			value += rmd * increment;
+		}
+		return value;
+	}
+
+	// --------------------------------------------
 
 	function randomBetween(min, max) {
 		if (min > max) {
@@ -259,15 +338,7 @@ requirejs(['Noise', 'Random',
 		dctx.restore();
 	}
 
-	function generateNebulaDensity(canvas, s) {
-		var m = new Float32Array(canvas.width * canvas.height);
-		for (var x = 0, j = 0; x < canvas.height; x++) {
-			for (var y = 0; y < canvas.width; y++, j++) {
-				m[j] = Math.pow(nebulaDensityNoise(s.dx + x / s.scale, s.dy + y / s.scale, 0, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.voronoi_F1, s.distortion, s.distortionScale, Noise.perlin2), s.exponent);
-			}
-		}
-		return m;
-	}
+	// --------------------------------------------
 
 	function generateNebula(canvas, nebulaDensity, s) {
 		var m = new Array(canvas.width * canvas.height);
@@ -411,6 +482,12 @@ requirejs(['Noise', 'Random',
 			settings.height = window.innerHeight;
 		}
 
+		if (typeof(queryVars['fast']) !== 'undefined') {
+			settings.fast = clamp(0, parseInt(queryVars['fast']), 3);
+		} else {
+			settings.fast = 1;
+		}
+
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
 		settings.realHeight = Math.floor(settings.height / settings.pixleScale);
 
@@ -472,7 +549,7 @@ requirejs(['Noise', 'Random',
 				dx: randomBetween(0, 500),
 				dy: randomBetween(0, 500),
 				exponent: randomBetween(2, 6),
-				offset: randomBetween(0, 0.5),
+				offset: randomBetween(-1, 1),
 				distortion: randomBetween(1, 2),
 				distortionScale: randomBetween(1, 2),
 			};
@@ -588,7 +665,7 @@ requirejs(['Noise', 'Random',
 		}
 
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaCount=' + settings.nebulaCount + '&brightStarMaxTotalBrightness=' + settings.brightStarMaxTotalBrightness + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&fast=' + (settings.fast) + '&pixleScale=' + settings.pixleScale + '&nebulaCount=' + settings.nebulaCount + '&brightStarMaxTotalBrightness=' + settings.brightStarMaxTotalBrightness + '&seed=' + settings.seed;
 		console.log(settings);
 	}
 
@@ -656,7 +733,7 @@ requirejs(['Noise', 'Random',
 	for (var i = 1; i <= settings.nebulaCount; i++) {
 		(function (x) {
 			callbacks.push(function () {
-				l['nebulaDensity' + x] = generateNebulaDensity(c['nebulaDensity' + x], settings['nebulaDensity' + x]);
+				l['nebulaDensity' + x] = generateNebulaDensity(c['nebulaDensity' + x], settings['nebulaDensity' + x], settings.fast);
 				normalizeFloatArray(l['nebulaDensity' + x], 0, 1);
 				floatArrayToCanvas(l['nebulaDensity' + x], c['nebulaDensity' + x]);
 			});
