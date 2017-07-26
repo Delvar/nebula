@@ -223,7 +223,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	// --------------------------------------------
 
 	var output = document.getElementById("output");
-	c.output = output;
 
 	output.width = settings.realWidth;
 	output.height = settings.realHeight;
@@ -235,15 +234,12 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	// --------------------------------------------
 
-	var tName,
-	tCanvas,
+	var tCanvas,
 	tSettings,
-	tSeed,
 	tLayer;
 
 	tSettings = settings.pointStars;
 	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
-
 	tLayer = new LayerPointStars(tCanvas, tSettings.seed, tSettings.density, tSettings.brightness);
 	layers.push(tLayer);
 
@@ -254,13 +250,14 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	for (var i = 0; i < settings.nebulas.length; i++) {
 		tSettings = settings.nebulas[i];
-		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
 		var tDCanvas = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
+		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
+		
 		var tDmCanvas = undefined;
 		var tDmDCanvas = undefined;
 		if (tSettings.darkMatter != undefined) {
-			tDmCanvas = addCanvas(tSettings.darkMatter.name, container, settings.realWidth, settings.realHeight);
 			tDmDCanvas = addCanvas(tSettings.darkMatter.name + '-density', container, settings.realWidth, settings.realHeight);
+			tDmCanvas = addCanvas(tSettings.darkMatter.name, container, settings.realWidth, settings.realHeight);
 		}
 		tLayer = new LayerNebula(tCanvas, tDCanvas, tDmCanvas, tDmDCanvas, tSettings);
 		layers.push(tLayer);
