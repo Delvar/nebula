@@ -105,6 +105,17 @@ define(
 
 		this.random = prng;
 
+		function between(min, max) {
+			if (min > max) {
+				var t = max;
+				max = min;
+				min = t;
+			}
+			var range = max - min;
+			return min + this.random() * range;
+		}
+		this.between = between;
+
 		//math['seed' + rngname] = seedrandom;
 
 		//

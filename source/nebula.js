@@ -8,415 +8,12 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Noise', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Random/SeedRandom',
-		'Noise/Blender/TwoD/FastVoroni'],
-	function (Noise, Random) {
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula',
+		'Random/SeedRandom'],
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula) {
 
 	seedRandom = new Random.SeedRandom();
-
-	var prng = function () {
-		return seedRandom.random();
-	};
-
-	var rgba = function (r, g, b, a) {
-		r = Math.floor(r * 255);
-		g = Math.floor(g * 255);
-		b = Math.floor(b * 255);
-		return "rgba(" + r + "," + g + "," + b + "," + a + ")";
-	}
-
-	var hsla = function (h, s, l, a) {
-		h = Math.floor(h * 360);
-		s = Math.floor(s * 100);
-		l = Math.floor(l * 100);
-		return "hsla(" + h + "," + s + "%," + l + "%," + a + ")";
-	}
-
-	var Colour = function (r, g, b, a) {
-		this.r = r;
-		this.g = g;
-		this.b = b;
-		this.a = a;
-
-		return this;
-	};
-
-	function hslToColour(h, s, l, a) {
-		var r,
-		g,
-		b;
-		a = a == undefined ? 1 : a;
-
-		if (s == 0) {
-			r = g = b = l; // achromatic
-		} else {
-			var hue2rgb = function hue2rgb(p, q, t) {
-				if (t < 0)
-					t += 1;
-				if (t > 1)
-					t -= 1;
-				if (t < 1 / 6)
-					return p + (q - p) * 6 * t;
-				if (t < 1 / 2)
-					return q;
-				if (t < 2 / 3)
-					return p + (q - p) * (2 / 3 - t) * 6;
-				return p;
-			}
-
-			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-			var p = 2 * l - q;
-			r = hue2rgb(p, q, h + 1 / 3);
-			g = hue2rgb(p, q, h);
-			b = hue2rgb(p, q, h - 1 / 3);
-		}
-
-		return new Colour(r, g, b, a);
-	}
-
-	function clamp(min, v, max) {
-		return Math.max(min, Math.min(v, max));
-	}
-
-	function normalizeFloatArray(floatArray, toMin, toMax) {
-		var min = 0;
-		var max = 0;
-		var i,
-		l = floatArray.length;
-		for (i = 0; i < l; i++) {
-			if (floatArray[i] < min) {
-				min = floatArray[i];
-			} else if (floatArray[i] > max) {
-				max = floatArray[i];
-			}
-		}
-		var range = toMax - toMin;
-		var ratio = range / (max - min);
-
-		for (i = 0; i < l; i++) {
-			floatArray[i] = ((floatArray[i] - min) * ratio) + toMin;
-		}
-	}
-
-	function floatArrayToImageDataUint8(floatArray, imageDataUint8) {
-		var i,
-		j,
-		l,
-		t;
-		for (i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			t = floatArray[j] || 0;
-			t = clamp(0, t, 1);
-			imageDataUint8[i] = Math.floor(t * 256);
-			imageDataUint8[i + 1] = Math.floor(t * 256);
-			imageDataUint8[i + 2] = Math.floor(t * 256);
-			imageDataUint8[i + 3] = 256;
-		}
-	}
-
-	function floatArrayToCanvas(floatArray, canvas) {
-		imageDataUint8 = new Uint8ClampedArray(canvas.width * canvas.height * 4);
-		floatArrayToImageDataUint8(floatArray, imageDataUint8);
-		var context = canvas.getContext("2d");
-		context.putImageData(new ImageData(imageDataUint8, canvas.width, canvas.height), 0, 0);
-	}
-
-	function colourArrayToImageDataUint8(colourArray, imageDataUint8) {
-		var i,
-		j,
-		l,
-		t;
-		for (i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			t = colourArray[j] || new Colour(0, 0, 0, 1);
-			imageDataUint8[i] = Math.floor(t.r * 256);
-			imageDataUint8[i + 1] = Math.floor(t.g * 256);
-			imageDataUint8[i + 2] = Math.floor(t.b * 256);
-			imageDataUint8[i + 3] = Math.floor(t.a * 256);
-		}
-	}
-
-	function colourArrayToCanvas(colourArray, canvas) {
-		imageDataUint8 = new Uint8ClampedArray(canvas.width * canvas.height * 4);
-		colourArrayToImageDataUint8(colourArray, imageDataUint8);
-		var context = canvas.getContext("2d");
-		context.putImageData(new ImageData(imageDataUint8, canvas.width, canvas.height), 0, 0);
-	}
-
-	function mixToCanvasToCanvas(sourceCanvas, destinationCanvas) {
-		var ctx = destinationCanvas.getContext("2d");
-		ctx.save();
-		if (sourceCanvas.compositeOperation) {
-			ctx.globalCompositeOperation = sourceCanvas.compositeOperation;
-		}
-		ctx.drawImage(sourceCanvas, 0, 0);
-		ctx.restore();
-	}
-
-	// --------------------------------------------
-	// -- 3d Noise, generaly looks better but is far slower.
-	// --------------------------------------------
-
-	function getDistortion(x, y, z, distortion, distortionScale, noisefunc) {
-		var rv1,
-		rv2,
-		rv3 = 0;
-		/* get a random vector and scale the randomization */
-		rv0 = noisefunc((x + 13.5) * distortionScale, (y + 13.5) * distortionScale, (z + 13.5) * distortionScale) * distortion;
-		rv1 = noisefunc((x) * distortionScale, (y) * distortionScale, (z) * distortionScale) * distortion;
-		rv2 = noisefunc((x - 13.5) * distortionScale, (y - 13.5) * distortionScale, (z - 13.5) * distortionScale) * distortion;
-		return {
-			x: x + rv0,
-			y: y + rv1,
-			z: z + rv2
-		};
-	}
-
-	function nebulaDensityNoise(x, y, z, H, lacunarity, octaves, offset, noisefunc, distortion, distortionScale, distortfunk) {
-		var value,
-		increment,
-		rmd;
-		var i;
-
-		var d = getDistortion(x, y, z, distortion, distortionScale, distortfunk);
-		/* first unscaled octave of function; later octaves are scaled */
-		value = offset + noisefunc(d.x, d.y, d.z);
-
-		if (value < 0.0001) {
-			return 0;
-		}
-
-		var pwHL = Math.pow(lacunarity, -H);
-		var pwr = pwHL; /* starts with i=1 instead of 0 */
-
-		x *= lacunarity;
-		y *= lacunarity;
-		z *= lacunarity;
-		//octaves = Math.floor(octaves);
-		for (i = 1; i < octaves; i++) {
-			var d = getDistortion(x, y, z, distortion, distortionScale, distortfunk);
-			increment = (noisefunc(d.x, d.y, d.z) + offset) * pwr * value;
-			value += increment;
-			pwr *= pwHL;
-			x *= lacunarity;
-			y *= lacunarity;
-			z *= lacunarity;
-		}
-
-		rmd = octaves - octaves;
-		if (rmd != 0.0) {
-			increment = (noisefunc(x, y, z) + offset) * pwr * value;
-			value += rmd * increment;
-		}
-		return value;
-	}
-
-	function generateNebulaDensity(canvas, s, fast) {
-		var m = new Float32Array(canvas.width * canvas.height);
-		for (var x = 0, j = 0; x < canvas.height; x++) {
-			for (var y = 0; y < canvas.width; y++, j++) {
-				if (fast === 0) {
-					m[j] = Math.pow(nebulaDensityNoise(s.dx + x / s.scale, s.dy + y / s.scale, 0, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.voronoi_F1, s.distortion, s.distortionScale, Noise.perlin3), s.exponent);
-				} else if (fast === 1) {
-					m[j] = Math.pow(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.TwoD.FastVoronoi_F1, s.distortion, s.distortionScale, Noise.perlin2), s.exponent);
-				} else if (fast === 2) {
-					m[j] = Math.pow(Math.sqrt(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.Blender.TwoD.FastVoronoi_Squared_F1, s.distortion, s.distortionScale, Noise.perlin2)), s.exponent+1);
-				} else {
-					m[j] = Math.pow(nebulaDensityNoise2d(s.dx + x / s.scale, s.dy + y / s.scale, s.h, s.lacunarity, s.octaves, s.offset, Noise.perlin2, s.distortion, s.distortionScale, Noise.perlin2), s.exponent);
-				}
-			}
-		}
-		return m;
-	}
-
-	// --------------------------------------------
-	// -- 2d Noise, Runs far faster!
-	// --------------------------------------------
-
-	function getDistortion2d(x, y, distortion, distortionScale, noisefunc) {
-		return {
-			x: x + noisefunc((x + 13.5) * distortionScale, (y + 13.5) * distortionScale) * distortion,
-			y: y + noisefunc((x) * distortionScale, (y) * distortionScale) * distortion,
-		};
-	}
-
-	function nebulaDensityNoise2d(x, y, H, lacunarity, octaves, offset, noisefunc, distortion, distortionScale, distortfunk) {
-		var value,
-		increment,
-		rmd;
-		var i;
-
-		var d = getDistortion2d(x, y, distortion, distortionScale, distortfunk);
-		/* first unscaled octave of function; later octaves are scaled */
-		value = offset + noisefunc(d.x, d.y);
-
-		if (value < 0.0001) {
-			return 0;
-		}
-
-		var pwHL = Math.pow(lacunarity, -H);
-		var pwr = pwHL; /* starts with i=1 instead of 0 */
-
-		x *= lacunarity;
-		y *= lacunarity;
-		//octaves = Math.floor(octaves);
-		for (i = 1; i < octaves; i++) {
-			var d = getDistortion2d(x, y, distortion, distortionScale, distortfunk);
-			increment = (noisefunc(d.x, d.y) + offset) * pwr * value;
-			value += increment;
-			pwr *= pwHL;
-			x *= lacunarity;
-			y *= lacunarity;
-		}
-
-		rmd = octaves - octaves;
-		if (rmd != 0.0) {
-			increment = (noisefunc(x, y) + offset) * pwr * value;
-			value += rmd * increment;
-		}
-		return value;
-	}
-
-	// --------------------------------------------
-
-	function randomBetween(min, max) {
-		if (min > max) {
-			var t = max;
-			max = min;
-			min = t;
-		}
-		var range = max - min;
-		return min + prng() * range;
-	}
-
-	function generateStars(canvas, s) {
-		var wxh = canvas.width * canvas.height;
-		var count = Math.round(wxh * s.density);
-		var m = new Array(wxh);
-		for (var i = 0; i < count; i++) {
-			var p = Math.floor(prng() * wxh);
-			var hue = Math.round(prng() * 360) / 360;
-			var saturation = (prng() * 0.3);
-			var lightness = Math.log(1 - prng()) * -s.brightness;
-			m[p] = hslToColour(hue, saturation, lightness);
-		}
-
-		return m;
-	}
-
-	function scatterSarsOnCanvas(canvas, settings) {
-		var dctx = canvas.getContext("2d");
-		var tc = document.createElement('canvas');
-		tc.width = 32;
-		tc.height = 32;
-		var radius = tc.width / 2;
-		var count = Math.round(canvas.width * canvas.height * settings.density * 0.005);
-		var ctx = tc.getContext("2d");
-		ctx.save();
-		dctx.save();
-		var grd;
-		var scaleFrom = 2 / tc.width;
-		var scaleTo = 4 / tc.width;
-
-		for (var i = 0; i < count; i++) {
-			var hue = prng();
-			var saturation = randomBetween(0.8, 1);
-			var lightness = randomBetween(0.8, 1);
-
-			ctx.clearRect(0, 0, tc.width, tc.height);
-			grd = ctx.createRadialGradient(radius, radius, radius * 0.1, radius, radius, radius);
-			grd.addColorStop(0, hsla(hue, saturation, lightness, 1));
-			grd.addColorStop(1, hsla(hue, saturation, lightness, 0));
-			ctx.fillStyle = grd;
-
-			var scale = randomBetween(scaleFrom, scaleTo);
-			ctx.setTransform(scale, 0, 0, scale, 0, 0);
-
-			ctx.fillRect(0, 0, tc.width, tc.height);
-			dctx.drawImage(tc, prng() * canvas.width, prng() * canvas.height);
-		}
-		ctx.restore();
-		dctx.restore();
-	}
-
-	// --------------------------------------------
-
-	function generateNebula(canvas, nebulaDensity, s) {
-		var m = new Array(canvas.width * canvas.height);
-
-		for (var x = 0, j = 0; x < canvas.height; x++) {
-			for (var y = 0; y < canvas.width; y++, j++) {
-				m[j] = hslToColour(s.h, s.s, (nebulaDensity[j] * 0.5 + 0.5) * s.l, nebulaDensity[j] * s.a);
-			}
-		}
-		return m;
-	};
-
-	// --------------------------------------------
-
-	function generateBrightStar(name, c, settings) {
-		var container = document.getElementById('list');
-
-		var flareWidth = settings.starRealRadius;
-		var ctx = c.getContext("2d");
-		var grd;
-
-		var aScale = flareWidth / settings.realWidth;
-		var bScale = settings.brightness;
-
-		var flareCount = Math.floor(100);
-
-		var xCenter = Math.floor(settings.realWidth / 2);
-		var yCenter = Math.floor(settings.realHeight / 2);
-
-		ctx.save();
-
-		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius, 0, 0, settings.glowRealRadius);
-		grd.addColorStop(0, hsla(settings.h, 1, 1, 0.5 * settings.brightness));
-		grd.addColorStop(1, hsla(settings.h, 1, 0.9, 0));
-		ctx.fillStyle = grd;
-
-		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
-		ctx.scale(aScale, bScale);
-		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
-
-		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
-		ctx.rotate(Math.PI / 2);
-		ctx.scale(aScale, bScale);
-		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
-
-		for (var i = 0; i < Math.PI; i = i + randomBetween(0.01, 0.2)) {
-			var sX = randomBetween(settings.radiusRatio, 0.8);
-			sX = Math.pow(sX, 3);
-			var sY = Math.pow(1 - sX, 3);
-
-			ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
-			ctx.rotate(i);
-			ctx.scale(aScale * (sY * 2), bScale * sX);
-			ctx.globalAlpha = 0.7 - sX;
-			ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
-		}
-
-		ctx.globalAlpha = 1;
-		ctx.restore();
-
-		ctx.setTransform(1, 0, 0, 1, xCenter, yCenter);
-		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius, 0, 0, settings.glowRealRadius);
-		grd.addColorStop(0, hsla(settings.h, 1, 0.9, 0.1 * settings.brightness));
-		grd.addColorStop(1, hsla(settings.h, 1, 0.8, 0));
-		ctx.fillStyle = grd;
-		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
-
-		grd = ctx.createRadialGradient(0, 0, settings.starRealRadius * 0.5, 0, 0, settings.starRealRadius);
-		grd.addColorStop(0, hsla(settings.h, 1, 1, 1));
-		grd.addColorStop(1, hsla(settings.h, 1, 0.8, 0));
-		ctx.fillStyle = grd;
-		ctx.fillRect(-xCenter, -yCenter, settings.realWidth, settings.realHeight);
-
-		ctx.restore();
-
-		return c;
-	}
-
+	
 	// --------------------------------------------
 
 	function getQueryVars() {
@@ -440,10 +37,10 @@ requirejs(['Noise', 'Random',
 		return r;
 	}
 
-	function addLittleCanvas(name, container, settings) {
+	function addCanvas(name, container, width, height) {
 		var c = document.createElement('canvas');
-		c.width = settings.realWidth;
-		c.height = settings.realHeight;
+		c.width = width;
+		c.height = height;
 		c.id = name;
 		container.appendChild(c);
 		return c;
@@ -491,208 +88,138 @@ requirejs(['Noise', 'Random',
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
 		settings.realHeight = Math.floor(settings.height / settings.pixleScale);
 
-		seedRandom.setSeed(settings.seed + 'stars');
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
+		var pointStars = {};
+		pointStars.name = 'pointStars',
+		pointStars.seed = settings.seed + '-' + pointStars.name;
+		seedRandom.setSeed(pointStars.seed);
+		pointStars.density = seedRandom.between(0.005, 0.05);
+		pointStars.brightness = seedRandom.between(0.1, 0.2);
+		settings.pointStars = pointStars;
 
-		settings.stars = {
-			density: randomBetween(0.005, 0.05),
-			brightness: randomBetween(0.1, 0.2)
+		var bigStars = {};
+		bigStars.name = 'bigStars',
+		bigStars.seed = settings.seed + '-' + bigStars.name;
+		seedRandom.setSeed(bigStars.seed);
+		bigStars.density = pointStars.density; //copy density from point stars
+		settings.bigStars = bigStars;
+
+		var brightStar = {
+			seed: settings.seed + '-brightStar'
 		};
 
-		seedRandom.setSeed(settings.seed + 'nebula');
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		var tNebulaCount = Math.round(randomBetween(1, 4));
-
-		if (typeof(queryVars['nebulaCount']) !== 'undefined') {
-			settings.nebulaCount = parseInt(queryVars['nebulaCount']);
-		}
-		if (settings.nebulaCount == undefined) {
-			settings.nebulaCount = tNebulaCount;
-		}
-
-		var originalNebulaCount = settings.nebulaCount;
-		for (var i = 1, j = 1; j <= originalNebulaCount; i += 1, j += 1) {
-			seedRandom.setSeed(settings.seed + 'nebula' + i);
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			var nd = {
-				scale: randomBetween(400, 2000) / settings.pixleScale,
-				h: randomBetween(0.2, 2),
-				lacunarity: randomBetween(1.2, 3),
-				octaves: Math.floor(randomBetween(3, 8)),
-				dx: randomBetween(0, 500),
-				dy: randomBetween(0, 500),
-				exponent: randomBetween(2, 6),
-				offset: randomBetween(-1, 1),
-				distortion: randomBetween(1, 2),
-				distortionScale: randomBetween(1, 2),
-			};
-
-			settings['nebulaDensity' + i] = nd;
-
-			var n = {
-				h: randomBetween(0, 1),
-				s: randomBetween(0.25, 1),
-				l: randomBetween(0.25, 1),
-				a: randomBetween(0.5, 1),
-			};
-			settings['nebula' + i] = n;
-			//console.log(n.l, n.a, n.l * n.a, nd.scale,((n.l * n.a > 0.3) && nd.scale > 550));
-			//drop in dark matter on brighter lower detail nebula for more awesome details!
-			if ((n.l * n.a > 0.3) && nd.scale > 550) {
-				i = i + 1;
-				settings.nebulaCount++;
-				seedRandom.setSeed(settings.seed + 'darkMatter' + i);
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				prng();
-				settings['nebulaDensity' + i] = {
-					scale: nd.scale,
-					h: nd.h / 2,
-					lacunarity: 2,
-					octaves: 7,
-					dx: nd.dx,
-					dy: nd.dy,
-					exponent: nd.exponent * 2,
-					offset: nd.offset,
-					distortion: nd.distortion,
-					distortionScale: nd.distortionScale,
-				};
-				settings['nebula' + i] = {
-					h: (n.h + randomBetween(0, 0.75)) % 1,
-					s: 0.5,
-					l: randomBetween(0, 0.25),
-					a: randomBetween(0.75, 1),
-					//compositeOperation: 'color-burn',
-					compositeOperation: 'multiply',
-					//compositeOperation: 'darken',
-				};
-			}
-		}
-
-		seedRandom.setSeed(settings.seed + 'brightStar');
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-		prng();
-
-		settings.brightStarSupersampling = 2;
-		var tBrightStarMaxTotalBrightness = randomBetween(0, 2); ;
-
-		if (typeof(queryVars['brightStarMaxTotalBrightness']) !== 'undefined') {
-			settings.brightStarMaxTotalBrightness = parseInt(queryVars['brightStarMaxTotalBrightness']);
-		}
-		if (settings.brightStarMaxTotalBrightness == undefined) {
-			settings.brightStarMaxTotalBrightness = tBrightStarMaxTotalBrightness;
-		}
-
-		settings.brightStarCount = 0;
+		seedRandom.setSeed(brightStar.seed);
+		brightStar.supersampling = 2;
+		brightStar.maxTotalBrightness = seedRandom.between(0, 2); ;
+		var brightStars = [];
 		var maxGlowRadius = 256;
-		for (var i = 1, tb = 0; tb <= settings.brightStarMaxTotalBrightness; i++) {
-			seedRandom.setSeed(settings.seed + 'brightStar' + i);
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			prng();
-			var s = {
-				h: randomBetween(0, 1),
-				x: Math.floor(randomBetween(0, settings.realWidth)),
-				y: Math.floor(randomBetween(0, settings.realHeight)),
-				brightness: randomBetween(0.1, 1),
-			};
 
-			s.starRadius = randomBetween(1, 5);
-			s.glowRadius = randomBetween(16, maxGlowRadius);
-			s.radiusRatio = s.starRadius / s.glowRadius;
+		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness; i++) {
+			var tBrightStar = {};
 
-			s.starRealRadius = Math.floor((s.starRadius * settings.brightStarSupersampling) / settings.pixleScale);
-			s.glowRealRadius = Math.floor((s.glowRadius * settings.brightStarSupersampling) / settings.pixleScale);
-			s.realWidth = s.realHeight = s.glowRealRadius * 2;
+			var tBrightStar = {};
+			tBrightStar.name = 'brightStar-' + i,
+			tBrightStar.seed = settings.seed + '-' + tBrightStar.name;
 
-			var glowRadiusRatio = s.glowRadius / maxGlowRadius;
-			glowRadiusRatio = glowRadiusRatio * glowRadiusRatio * s.brightness;
+			seedRandom.setSeed(tBrightStar.seed);
+
+			tBrightStar.h = seedRandom.between(0, 1);
+
+			tBrightStar.brightness = seedRandom.between(0.1, 1);
+			tBrightStar.starRadius = Math.floor(seedRandom.between(1, 5));
+			tBrightStar.glowRadius = Math.floor(seedRandom.between(16, maxGlowRadius));
+
+			tBrightStar.radiusRatio = tBrightStar.starRadius / tBrightStar.glowRadius;
+			tBrightStar.starRealRadius = Math.floor((tBrightStar.starRadius * brightStar.supersampling) / settings.pixleScale);
+			tBrightStar.glowRealRadius = Math.floor((tBrightStar.glowRadius * brightStar.supersampling) / settings.pixleScale);
+
+			tBrightStar.x = Math.floor(seedRandom.between(0, settings.realWidth) - tBrightStar.glowRealRadius);
+			tBrightStar.y = Math.floor(seedRandom.between(0, settings.realHeight) - tBrightStar.glowRealRadius);
+
+			tBrightStar.realWidth = tBrightStar.realHeight = tBrightStar.glowRealRadius * 2;
+
+			var glowRadiusRatio = tBrightStar.glowRadius / maxGlowRadius;
+			glowRadiusRatio = glowRadiusRatio * glowRadiusRatio * tBrightStar.brightness;
 			tb += glowRadiusRatio;
 
-			if (tb <= settings.brightStarMaxTotalBrightness) {
-				settings['brightStar' + i] = s;
-				settings.brightStarCount = i;
+			if (tb <= brightStar.maxTotalBrightness) {
+				brightStars.push(tBrightStar);
 			}
 		}
+		settings.brightStar = brightStar;
+		settings.brightStars = brightStars;
+
+		var nebula = {
+			seed: settings.seed + '-nebula'
+		};
+		seedRandom.setSeed(nebula.seed);
+		nebula.count = Math.round(seedRandom.between(1, 4));
+		var nebulas = [];
+
+		for (var i = 0; i < nebula.count; i++) {
+			var tNebula = {};
+			tNebula.name = 'nebula-' + i;
+			tNebula.seed = settings.seed + '-' + tNebula.name;
+
+			seedRandom.setSeed(tNebula.seed);
+
+			var density = {
+				scale: seedRandom.between(400, 2000) / settings.pixleScale,
+				h: seedRandom.between(0.2, 2),
+				lacunarity: seedRandom.between(1.2, 3),
+				octaves: seedRandom.between(6, 8),
+				dx: seedRandom.between(0, 500),
+				dy: seedRandom.between(0, 500),
+				exponent: seedRandom.between(2, 6),
+				offset: seedRandom.between(-1, 1),
+				distortion: seedRandom.between(1, 2),
+				distortionScale: seedRandom.between(1, 2),
+			};
+
+			tNebula.density = density;
+			tNebula.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
+
+			if ((tNebula.colour.l * tNebula.colour.a > 0.3) && density.scale > 550) {
+				var tDarkMatter = {};
+				tDarkMatter.name = tNebula.name + '-dm';
+				tDarkMatter.seed = settings.seed + '-' + tDarkMatter.name;
+
+				var dmDensity = {
+					scale: density.scale,
+					h: density.h / 2,
+					lacunarity: 2,
+					octaves: density.octaves + 1,
+					dx: density.dx,
+					dy: density.dy,
+					exponent: density.exponent * 2,
+					offset: density.offset,
+					distortion: density.distortion,
+					distortionScale: density.distortionScale,
+				};
+
+				tDarkMatter.density = dmDensity;
+				tDarkMatter.colour = new Colour.hsla((tNebula.colour.h + seedRandom.between(-0.25, 0.25)) % 1, 0.5, seedRandom.between(0, 0.25), seedRandom.between(0.75, 1));
+				tNebula.darkMatter = tDarkMatter;
+			}
+
+			nebulas.push(tNebula);
+		}
+
+		settings.nebula = nebula;
+		settings.nebulas = nebulas;
 
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&fast=' + (settings.fast) + '&pixleScale=' + settings.pixleScale + '&nebulaCount=' + settings.nebulaCount + '&brightStarMaxTotalBrightness=' + settings.brightStarMaxTotalBrightness + '&seed=' + settings.seed;
+		//seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&fast=' + (settings.fast) + '&pixleScale=' + settings.pixleScale + '&nebulaCount=' + settings.nebulaCount + '&brightStarMaxTotalBrightness=' + settings.brightStarMaxTotalBrightness + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale +'&seed=' + settings.seed;
 		console.log(settings);
 	}
 
 	// --------------------------------------------
 
 	var settings = {};
-	var c = {};
-	var l = {};
-
-	// --------------------------------------------
-
 	var queryVars = getQueryVars();
-
-	// --------------------------------------------
-
 	generateConfiguration(settings);
+	var layers = new Array();
 
-	for (var i = 0; i < document.styleSheets.length; i++) {
-		var styleSheet = document.styleSheets[i];
-		for (var j = 0; j < styleSheet.rules.length; j++) {
-			var cssStyleRule = styleSheet.rules[j];
-			if (cssStyleRule.selectorText == '#list canvas') {
-				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount + 1)) + 'px';
-				break;
-			}
-		}
-	}
 	// --------------------------------------------
 
 	var output = document.getElementById("output");
@@ -708,71 +235,88 @@ requirejs(['Noise', 'Random',
 
 	// --------------------------------------------
 
-	c.stars = addLittleCanvas('stars', container, settings);
+	var tName,
+	tCanvas,
+	tSettings,
+	tSeed,
+	tLayer;
 
-	for (var i = 1; i <= settings.nebulaCount; i++) {
-		c['nebulaDensity' + i] = addLittleCanvas('nebulaDensity' + i, container, settings);
-		c['nebula' + i] = addLittleCanvas('nebula' + i, container, settings);
+	tSettings = settings.pointStars;
+	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
+
+	tLayer = new LayerPointStars(tCanvas, tSettings.seed, tSettings.density, tSettings.brightness);
+	layers.push(tLayer);
+
+	tSettings = settings.bigStars;
+	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
+	tLayer = new LayerBigStars(tCanvas, tSettings.seed, tSettings.density);
+	layers.push(tLayer);
+
+	for (var i = 0; i < settings.nebulas.length; i++) {
+		tSettings = settings.nebulas[i];
+		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
+		var tDCanvas = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
+		var tDmCanvas = undefined;
+		var tDmDCanvas = undefined;
+		if (tSettings.darkMatter != undefined) {
+			tDmCanvas = addCanvas(tSettings.darkMatter.name, container, settings.realWidth, settings.realHeight);
+			tDmDCanvas = addCanvas(tSettings.darkMatter.name + '-density', container, settings.realWidth, settings.realHeight);
+		}
+		tLayer = new LayerNebula(tCanvas, tDCanvas, tDmCanvas, tDmDCanvas, tSettings);
+		layers.push(tLayer);
 	}
 
-	for (var i = 1; i <= settings.brightStarCount; i++) {
-		c['brightStar' + i] = addLittleCanvas('brightStar' + i, container, settings['brightStar' + i]);
+	for (var i = 0; i < settings.brightStars.length; i++) {
+		tSettings = settings.brightStars[i];
+		tCanvas = addCanvas(tSettings.name, container, tSettings.realWidth, tSettings.realHeight);
+		tLayer = new LayerBrightStar(tCanvas, tSettings.seed, tSettings.h, tSettings.brightness, tSettings.starRadius, tSettings.glowRadius, tSettings.radiusRatio, tSettings.starRealRadius, tSettings.glowRealRadius, tSettings.realWidth, tSettings.realHeight);
+		tLayer.compositeOperation = 'lighter';
+		tLayer.setTransform(1 / settings.brightStar.supersampling, 1 / settings.brightStar.supersampling, tSettings.x, tSettings.y);
+		layers.push(tLayer);
+	}
+	
+	// --------------------------------------------
+
+	for (var i = 0; i < document.styleSheets.length; i++) {
+		var styleSheet = document.styleSheets[i];
+		for (var j = 0; j < styleSheet.rules.length; j++) {
+			var cssStyleRule = styleSheet.rules[j];
+			if (cssStyleRule.selectorText == '#list canvas') {
+				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px';//Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount + 1)) + 'px';
+				break;
+			}
+		}
 	}
 
 	// --------------------------------------------
 
-	var callbacks = [];
-
-	callbacks.push(function () {
-		l.stars = generateStars(c.stars, settings.stars);
-		colourArrayToCanvas(l.stars, c.stars);
-		scatterSarsOnCanvas(c.stars, settings.stars);
-		mixToCanvasToCanvas(c.stars, c.output);
-	});
-
-	for (var i = 1; i <= settings.nebulaCount; i++) {
-		(function (x) {
-			callbacks.push(function () {
-				l['nebulaDensity' + x] = generateNebulaDensity(c['nebulaDensity' + x], settings['nebulaDensity' + x], settings.fast);
-				normalizeFloatArray(l['nebulaDensity' + x], 0, 1);
-				floatArrayToCanvas(l['nebulaDensity' + x], c['nebulaDensity' + x]);
-			});
-			callbacks.push(function () {
-				l['nebula' + x] = generateNebula(c['nebula' + x], l['nebulaDensity' + x], settings['nebula' + x]);
-				colourArrayToCanvas(l['nebula' + x], c['nebula' + x]);
-				c['nebula' + x].compositeOperation = settings['nebula' + x].compositeOperation;
-				mixToCanvasToCanvas(c['nebula' + x], c.output);
-			});
-		})(i);
-	}
-
-	for (var i = 1; i <= settings.brightStarCount; i++) {
-		(function (x) {
-			callbacks.push(function () {
-				var name = 'brightStar' + x;
-				var s = settings[name];
-				generateBrightStar(name, c[name], s);
-				var ctx = c.output.getContext("2d");
-				ctx.save();
-				ctx.globalCompositeOperation = 'lighter';
-				var scale = 1 / settings.brightStarSupersampling;
-				ctx.scale(scale, scale);
-				ctx.drawImage(c[name], (s.x * settings.brightStarSupersampling) - s.realWidth / 2, (s.y * settings.brightStarSupersampling) - s.realHeight / 2);
-				ctx.restore();
-			});
-		})(i);
-	}
-
-	function execCallbacks() {
-		var funk = callbacks.shift();
-		if (funk) {
-			funk();
-			setTimeout(execCallbacks, 100);
-		} else {
-			var spinner = document.getElementById("spinner");
-			spinner.style.display = 'none';
+	function compositLayersToOutput() {
+		var ctx = output.getContext("2d");
+		ctx.save();
+		ctx.fillStyle = "black";
+		ctx.fillRect(0, 0, output.width, output.height);
+		for (var i = 0; i < layers.length; i++) {
+			ctx.globalCompositeOperation = layers[i].compositeOperation;
+			ctx.setTransform(layers[i].scaleX, 0, 0, layers[i].scaleY, layers[i].offsetX, layers[i].offsetY);
+			ctx.drawImage(layers[i].canvas, 0, 0);
 		}
+		ctx.restore();
 	}
-	setTimeout(execCallbacks, 100);
+
+	// --------------------------------------------
+
+	function processLayers() {
+		for (var i = 0; i < layers.length; i++) {
+			if (layers[i].status == Layer.Status.ReadyForProcessing) {
+				layers[i].startProcessing();
+				compositLayersToOutput();
+				setTimeout(processLayers, 1);
+				return;
+			}
+		}
+		var spinner = document.getElementById("spinner");
+		spinner.style.display = 'none';
+	}
+	setTimeout(processLayers, 1);
 
 });

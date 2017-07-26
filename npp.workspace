@@ -1,0 +1,36 @@
+<NotepadPlus>
+    <Project name="Project Name">
+        <Folder name="source">
+            <Folder name="libs">
+                <File name="source\libs\require.js" />
+            </Folder>
+            <Folder name="Noise">
+                <Folder name="Blender">
+                    <Folder name="TwoD">
+                        <File name="source\Noise\Blender\TwoD\FastVoroni.js" />
+                    </Folder>
+                </Folder>
+                <File name="source\Noise\Blender.js" />
+                <File name="source\Noise\BlenderFast2dVoroni.js" />
+                <File name="source\Noise\josephg_noisejs.js" />
+                <File name="source\Noise\Perlin.js" />
+                <File name="source\Noise\Simplex.js" />
+            </Folder>
+            <Folder name="Random">
+                <File name="source\Random\SeedRandom.js" />
+            </Folder>
+            <File name="source\Colour.js" />
+            <File name="source\Layer.js" />
+            <File name="source\LayerBigStars.js" />
+            <File name="source\LayerBrightStar.js" />
+            <File name="source\LayerPointStars.js" />
+            <File name="source\nebula.js" />
+            <File name="source\Noise.js" />
+            <File name="source\Random.js" />
+        </Folder>
+        <File name="index.html" />
+        <File name="LICENSE" />
+        <File name="README.md" />
+        <File name="_config.yml" />
+    </Project>
+</NotepadPlus>
