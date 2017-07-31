@@ -11,6 +11,9 @@ define(
 		this.scaleY = 1;
 		this.offsetX = 0;
 		this.offsetY = 0;
+		this.regX = 0;
+		this.regY = 0;
+		this.rotation = 0;
 		this.type = undefined;
 		this.status = Layer.Status.Unknown;
 	}
@@ -23,11 +26,14 @@ define(
 		Failed: "Failed"
 	};
 
-	Layer.prototype.setTransform = function (scaleX, scaleY, offsetX, offsetY) {
+	Layer.prototype.setTransform = function (scaleX, scaleY, offsetX, offsetY, regX, regY, rotation) {
 		this.scaleX = scaleX;
 		this.scaleY = scaleY;
-		this.offsetX = offsetX;
-		this.offsetY = offsetY;
+		this.offsetX = offsetX || 0;
+		this.offsetY = offsetY || 0;
+		this.regX = regX || 0;
+		this.regY = regY || 0;
+		this.rotation = rotation || 0;
 		return this;
 	}
 

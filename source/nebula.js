@@ -130,8 +130,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			tBrightStar.starRealRadius = Math.floor((tBrightStar.starRadius * brightStar.supersampling) / settings.pixleScale);
 			tBrightStar.glowRealRadius = Math.floor((tBrightStar.glowRadius * brightStar.supersampling) / settings.pixleScale);
 
-			tBrightStar.x = Math.floor(seedRandom.between(0, settings.realWidth) - tBrightStar.glowRealRadius);
-			tBrightStar.y = Math.floor(seedRandom.between(0, settings.realHeight) - tBrightStar.glowRealRadius);
+			tBrightStar.x = Math.floor(seedRandom.between(0, settings.realWidth));
+			tBrightStar.y = Math.floor(seedRandom.between(0, settings.realHeight));
 
 			tBrightStar.realWidth = tBrightStar.realHeight = tBrightStar.glowRealRadius * 2;
 
@@ -163,8 +163,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			var density = {
 				scale: seedRandom.between(settings.realWidth / 2, settings.realWidth * 2),
 				h: seedRandom.between(0.4, 1),
-				lacunarity: seedRandom.between(1.5, 3),
-				octaves: seedRandom.between(6, 8),
+				lacunarity: seedRandom.between(2, 4),
+				octaves: seedRandom.between(5, 8),
 				dx: seedRandom.between(0, 50000),
 				dy: seedRandom.between(0, 50000),
 				exponent: seedRandom.between(1, 5),
@@ -174,7 +174,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			};
 
 			tNebula.density = density;
-			tNebula.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
+			tNebula.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 
 			nebulas.push(tNebula);
 		}
@@ -240,7 +240,9 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		tCanvas = addCanvas(tSettings.name, container, tSettings.realWidth, tSettings.realHeight);
 		tLayer = new LayerBrightStar(tCanvas, tSettings.seed, tSettings.h, tSettings.brightness, tSettings.starRadius, tSettings.glowRadius, tSettings.radiusRatio, tSettings.starRealRadius, tSettings.glowRealRadius, tSettings.realWidth, tSettings.realHeight);
 		tLayer.compositeOperation = 'lighter';
-		tLayer.setTransform(1 / settings.brightStar.supersampling, 1 / settings.brightStar.supersampling, tSettings.x, tSettings.y);
+		
+		
+		tLayer.setTransform(1 / settings.brightStar.supersampling, 1 / settings.brightStar.supersampling, tSettings.x, tSettings.y, tSettings.glowRealRadius, tSettings.glowRealRadius);
 		layers.push(tLayer);
 	}
 
@@ -251,7 +253,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		for (var j = 0; j < styleSheet.rules.length; j++) {
 			var cssStyleRule = styleSheet.rules[j];
 			if (cssStyleRule.selectorText == '#list canvas') {
-				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px'; //Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount + 1)) + 'px';
+				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px';
 				break;
 			}
 		}
@@ -264,12 +266,19 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		ctx.save();
 		ctx.fillStyle = "black";
 		ctx.fillRect(0, 0, output.width, output.height);
-		for (var i = 0; i < layers.length; i++) {
-			ctx.globalCompositeOperation = layers[i].compositeOperation;
-			ctx.setTransform(layers[i].scaleX, 0, 0, layers[i].scaleY, layers[i].offsetX, layers[i].offsetY);
-			ctx.drawImage(layers[i].canvas, 0, 0);
-		}
 		ctx.restore();
+		for (var i = 0; i < layers.length; i++) {
+			ctx.save();
+			ctx.globalCompositeOperation = layers[i].compositeOperation;
+			ctx.translate(layers[i].offsetX, layers[i].offsetY);
+			ctx.scale(layers[i].scaleX,layers[i].scaleY);
+			ctx.rotate(layers[i].rotation);
+			ctx.translate(-layers[i].regX,-layers[i].regY);
+			
+			ctx.drawImage(layers[i].canvas, 0, 0);
+			ctx.restore();
+		}
+
 	}
 
 	// --------------------------------------------
