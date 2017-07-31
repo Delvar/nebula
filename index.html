@@ -105,12 +105,14 @@ canvas {
 	}
 }
 .lds-dual-ring {
-	position: relative;
-	transform: translate(-50%, -50%);
-	-ms-transform: translate(-50%, -50%);
-	-webkit-transform: translate(-50%, -50%);
-	width: 220px;
-	height: 220px;
+    position: relative;
+    /* transform: translate(-50%, -50%); */
+    -ms-transform: translate(-50%, -50%);
+    /* -webkit-transform: translate(-50%, -50%); */
+    width: 220px;
+    height: 220px;
+    top: -110px;
+    left: -110px;
 }
 .lds-dual-ring div {
 	position: absolute;
@@ -147,16 +149,16 @@ canvas {
 	left: 0;
 }
 .loading {
-	position: fixed;
-	z-index: 999;
-	height: 2em;
-	width: 2em;
-	overflow: show;
-	margin: auto;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
+    position: fixed;
+    z-index: 999;
+    height: 0em;
+    width: 0em;
+    overflow: visible;
+    margin: auto;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
 }
 		</style>
 	</div><!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->

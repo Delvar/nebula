@@ -39,6 +39,7 @@ define(
 	function clamp(min, v, max) {
 		return Math.max(min, Math.min(v, max));
 	}
+	Layer.prototype.clamp = clamp;
 
 	Layer.prototype.floatArrayToImageDataUint8 = function (floatArray, imageDataUint8) {
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
@@ -79,8 +80,8 @@ define(
 	}
 
 	Layer.prototype.normalizeFloatArray = function (floatArray, toMin, toMax) {
-		var min = 0;
-		var max = 0;
+		var min = floatArray[0];
+		var max = floatArray[0];
 		var i,
 		l = floatArray.length;
 		for (i = 0; i < l; i++) {

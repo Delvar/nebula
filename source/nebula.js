@@ -13,7 +13,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula) {
 
 	seedRandom = new Random.SeedRandom();
-	
+
 	// --------------------------------------------
 
 	function getQueryVars() {
@@ -115,8 +115,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness; i++) {
 			var tBrightStar = {};
-
-			var tBrightStar = {};
 			tBrightStar.name = 'brightStar-' + i,
 			tBrightStar.seed = settings.seed + '-' + tBrightStar.name;
 
@@ -163,43 +161,20 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			seedRandom.setSeed(tNebula.seed);
 
 			var density = {
-				scale: seedRandom.between(400, 2000) / settings.pixleScale,
-				h: seedRandom.between(0.2, 2),
-				lacunarity: seedRandom.between(1.2, 3),
+				scale: seedRandom.between(settings.realWidth / 2, settings.realWidth * 2),
+				h: seedRandom.between(0.4, 1),
+				lacunarity: seedRandom.between(1.5, 3),
 				octaves: seedRandom.between(6, 8),
-				dx: seedRandom.between(0, 500),
-				dy: seedRandom.between(0, 500),
-				exponent: seedRandom.between(2, 6),
-				offset: seedRandom.between(-1, 1),
-				distortion: seedRandom.between(1, 2),
-				distortionScale: seedRandom.between(1, 2),
+				dx: seedRandom.between(0, 50000),
+				dy: seedRandom.between(0, 50000),
+				exponent: seedRandom.between(1, 5),
+				distortion: seedRandom.between(0.5, 2),
+				distortionScale: seedRandom.between(0.5, 5),
+				dh: seedRandom.between(-1, 1),
 			};
 
 			tNebula.density = density;
 			tNebula.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
-
-			if ((tNebula.colour.l * tNebula.colour.a > 0.3) && density.scale > 550) {
-				var tDarkMatter = {};
-				tDarkMatter.name = tNebula.name + '-dm';
-				tDarkMatter.seed = settings.seed + '-' + tDarkMatter.name;
-
-				var dmDensity = {
-					scale: density.scale,
-					h: density.h / 2,
-					lacunarity: 2,
-					octaves: density.octaves + 1,
-					dx: density.dx,
-					dy: density.dy,
-					exponent: density.exponent * 2,
-					offset: density.offset,
-					distortion: density.distortion,
-					distortionScale: density.distortionScale,
-				};
-
-				tDarkMatter.density = dmDensity;
-				tDarkMatter.colour = new Colour.hsla((tNebula.colour.h + seedRandom.between(-0.25, 0.25)) % 1, 0.5, seedRandom.between(0, 0.25), seedRandom.between(0.75, 1));
-				tNebula.darkMatter = tDarkMatter;
-			}
 
 			nebulas.push(tNebula);
 		}
@@ -208,8 +183,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		settings.nebulas = nebulas;
 
 		seedOutput = document.getElementById("seed");
-		//seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&fast=' + (settings.fast) + '&pixleScale=' + settings.pixleScale + '&nebulaCount=' + settings.nebulaCount + '&brightStarMaxTotalBrightness=' + settings.brightStarMaxTotalBrightness + '&seed=' + settings.seed;
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale +'&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&seed=' + settings.seed;
 		console.log(settings);
 	}
 
@@ -217,7 +191,13 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	var settings = {};
 	var queryVars = getQueryVars();
-	generateConfiguration(settings);
+
+	if (typeof(queryVars['s']) !== 'undefined' && queryVars['s'] != '') {
+		settings = JSON.parse(queryVars['s']);
+	} else {
+		generateConfiguration(settings);
+	}
+	console.log(JSON.stringify(settings));
 	var layers = new Array();
 
 	// --------------------------------------------
@@ -250,16 +230,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	for (var i = 0; i < settings.nebulas.length; i++) {
 		tSettings = settings.nebulas[i];
-		var tDCanvas = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
 		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
-		
-		var tDmCanvas = undefined;
-		var tDmDCanvas = undefined;
-		if (tSettings.darkMatter != undefined) {
-			tDmDCanvas = addCanvas(tSettings.darkMatter.name + '-density', container, settings.realWidth, settings.realHeight);
-			tDmCanvas = addCanvas(tSettings.darkMatter.name, container, settings.realWidth, settings.realHeight);
-		}
-		tLayer = new LayerNebula(tCanvas, tDCanvas, tDmCanvas, tDmDCanvas, tSettings);
+		tLayer = new LayerNebula(tCanvas, tSettings);
 		layers.push(tLayer);
 	}
 
@@ -271,7 +243,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		tLayer.setTransform(1 / settings.brightStar.supersampling, 1 / settings.brightStar.supersampling, tSettings.x, tSettings.y);
 		layers.push(tLayer);
 	}
-	
+
 	// --------------------------------------------
 
 	for (var i = 0; i < document.styleSheets.length; i++) {
@@ -279,7 +251,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		for (var j = 0; j < styleSheet.rules.length; j++) {
 			var cssStyleRule = styleSheet.rules[j];
 			if (cssStyleRule.selectorText == '#list canvas') {
-				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px';//Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount + 1)) + 'px';
+				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px'; //Math.floor(window.innerWidth / ((settings.nebulaCount * 2) + settings.brightStarCount + 1)) + 'px';
 				break;
 			}
 		}
