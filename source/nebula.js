@@ -122,7 +122,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 			tBrightStar.h = seedRandom.between(0, 1);
 
-			tBrightStar.brightness = seedRandom.between(0.1, 1);
+			tBrightStar.brightness = seedRandom.between(0.5, 1);
 			tBrightStar.starRadius = Math.floor(seedRandom.between(1, 5));
 			tBrightStar.glowRadius = Math.floor(seedRandom.between(16, maxGlowRadius));
 
@@ -132,6 +132,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 			tBrightStar.x = Math.floor(seedRandom.between(0, settings.realWidth));
 			tBrightStar.y = Math.floor(seedRandom.between(0, settings.realHeight));
+			tBrightStar.z = Math.floor(seedRandom.between(10, 100));
 
 			tBrightStar.realWidth = tBrightStar.realHeight = tBrightStar.glowRealRadius * 2;
 
@@ -139,13 +140,14 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			glowRadiusRatio = glowRadiusRatio * glowRadiusRatio * tBrightStar.brightness;
 			tb += glowRadiusRatio;
 
-			if (tb <= brightStar.maxTotalBrightness) {
+			//if (tb <= brightStar.maxTotalBrightness) {
 				brightStars.push(tBrightStar);
-			}
+			//}
 		}
 		settings.brightStar = brightStar;
 		settings.brightStars = brightStars;
 
+		
 		var nebula = {
 			seed: settings.seed + '-nebula'
 		};
@@ -160,22 +162,22 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 			seedRandom.setSeed(tNebula.seed);
 
-			var density = {
-				scale: seedRandom.between(settings.realWidth / 2, settings.realWidth * 2),
-				h: seedRandom.between(0.4, 1),
-				lacunarity: seedRandom.between(2, 4),
-				octaves: seedRandom.between(5, 8),
-				dx: seedRandom.between(0, 50000),
-				dy: seedRandom.between(0, 50000),
-				exponent: seedRandom.between(1, 5),
-				distortion: seedRandom.between(0.5, 2),
-				distortionScale: seedRandom.between(0.5, 5),
-				dh: seedRandom.between(-1, 1),
-			};
+			tNebula.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth * 2);
+			tNebula.roughness = seedRandom.between(0.4, 1);
+			tNebula.lacunarity = seedRandom.between(2, 4);
+			tNebula.powLacunarityRoughness = Math.pow(tNebula.lacunarity, -tNebula.roughness);
+			tNebula.octaves = seedRandom.between(5, 8);
+			tNebula.offsetX = seedRandom.between(0, 50000);
+			tNebula.offsetY = seedRandom.between(0, 50000);
+			tNebula.alphaExponent = seedRandom.between(1, 5);
+			tNebula.distortionFactor = seedRandom.between(0.5, 2);
+			tNebula.distortionScale = seedRandom.between(0.5, 5);
+			tNebula.hueFactor = seedRandom.between(-1, 1);
+			tNebula.dHuePwr = seedRandom.between(0, 1);
+			tNebula.normalize = false;
 
-			tNebula.density = density;
 			tNebula.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
-
+			tNebula.ambiant = brightStars.lenght == 0 ? 1 : seedRandom.between(0, 1);
 			nebulas.push(tNebula);
 		}
 
@@ -230,8 +232,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	for (var i = 0; i < settings.nebulas.length; i++) {
 		tSettings = settings.nebulas[i];
+		var tHeightCanvas = addCanvas(tSettings.name + '-height', container, settings.realWidth, settings.realHeight);
+		var tNormalCanvas = addCanvas(tSettings.name + '-normal', container, settings.realWidth, settings.realHeight);
+		var tLightCanvas = addCanvas(tSettings.name + '-light', container, settings.realWidth, settings.realHeight);
 		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
-		tLayer = new LayerNebula(tCanvas, tSettings);
+		tLayer = new LayerNebula(tCanvas, tNormalCanvas, tHeightCanvas, tLightCanvas, tSettings, settings.brightStars);
 		layers.push(tLayer);
 	}
 
@@ -240,8 +245,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		tCanvas = addCanvas(tSettings.name, container, tSettings.realWidth, tSettings.realHeight);
 		tLayer = new LayerBrightStar(tCanvas, tSettings.seed, tSettings.h, tSettings.brightness, tSettings.starRadius, tSettings.glowRadius, tSettings.radiusRatio, tSettings.starRealRadius, tSettings.glowRealRadius, tSettings.realWidth, tSettings.realHeight);
 		tLayer.compositeOperation = 'lighter';
-		
-		
+
 		tLayer.setTransform(1 / settings.brightStar.supersampling, 1 / settings.brightStar.supersampling, tSettings.x, tSettings.y, tSettings.glowRealRadius, tSettings.glowRealRadius);
 		layers.push(tLayer);
 	}
@@ -271,10 +275,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			ctx.save();
 			ctx.globalCompositeOperation = layers[i].compositeOperation;
 			ctx.translate(layers[i].offsetX, layers[i].offsetY);
-			ctx.scale(layers[i].scaleX,layers[i].scaleY);
+			ctx.scale(layers[i].scaleX, layers[i].scaleY);
 			ctx.rotate(layers[i].rotation);
-			ctx.translate(-layers[i].regX,-layers[i].regY);
-			
+			ctx.translate(-layers[i].regX, -layers[i].regY);
+
 			ctx.drawImage(layers[i].canvas, 0, 0);
 			ctx.restore();
 		}
