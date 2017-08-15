@@ -38,11 +38,11 @@ define(
 
 		for (var i = 0; i < brightStars.length; i++) {
 			var l = brightStars[i];
-			var v = new Vector3(x - l.x, y - l.y, z - l.z);
+			var v = new Vector3(x - l.x, y - l.y, z - l.tz); //using tz as it couldbe pushed forward.
 			var sqMag = v.squareMagnitude();
 			v.normalizeOverwrite();
 			var dotProduct = normal.dotProduct(v);
-			brightness += ( (l.brightness*l.glowRadius*l.glowRadius) / sqMag) * dotProduct;
+			brightness += ((l.brightness * l.glowRadius * l.glowRadius) / sqMag) * dotProduct;
 
 		}
 		//return this.clamp(0, brightness + this.settings.ambiant , 1);
@@ -52,7 +52,7 @@ define(
 	LayerNebula.prototype.generateBrightness = function (dataArray) {
 		for (var y = 0, j = 0; y < this.canvas.height; y++) {
 			for (var x = 0; x < this.canvas.width; x++, j++) {
-				dataArray[j].brightness = this.getBrightnessAt(x, y, dataArray[j].alpha * 100, dataArray[j].normal, dataArray[j].alpha, this.brightStars); // * dataArray[j].alpha;
+				dataArray[j].brightness = this.getBrightnessAt(x, y, dataArray[j].z, dataArray[j].normal, dataArray[j].alpha, this.brightStars);
 			}
 		}
 	};
@@ -62,7 +62,7 @@ define(
 		var d;
 		for (var y = 0, j = 0; y < this.canvas.height; y++) {
 			for (var x = 0; x < this.canvas.width; x++, j++) {
-				d = this.clamp(0, dataArray[j].smoothBrightness,1);
+				d = this.clamp(0, dataArray[j].smoothBrightness, 1);
 				m[j] = new Colour.rgba(d, d, d, 1);
 			}
 		}
@@ -81,7 +81,7 @@ define(
 				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness-1)),2), d.alpha);
 				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness)),2), d.alpha);
 				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha, d.alpha);
-				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (Math.sqrt(Math.max(0,d.smoothBrightness-1))/5), d.alpha);
+				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 5), d.alpha);
 				var tc2 = new Colour.rgba(tc.r * cBrightness, tc.g * cBrightness, tc.b * cBrightness, d.alpha);
 				m[j] = new Colour.rgba(this.interp(tc2.r, 0, d.l), this.interp(tc2.g, 0, d.l), this.interp(tc2.b, 0, d.l), Math.max(d.alpha, d.l));
 				//var dlb = 2-d.brightness;//Math.min(d.l,d.brightness);
@@ -151,7 +151,8 @@ define(
 		var r = {
 			alpha: 0,
 			l: 0,
-			dHue: 0
+			dHue: 0,
+			z: 0,
 		};
 
 		var noiseFunc = Noise.Blender.TwoD.FastVoronoi_F1;
@@ -203,6 +204,7 @@ define(
 
 		r.alpha = Math.pow(value, alphaExponent);
 		r.l = Math.pow(value2, alphaExponent * 3);
+		r.z = Math.max(r.alpha, r.l) * 100;
 		r.dHue = dHue;
 		return r;
 	}
@@ -231,6 +233,7 @@ define(
 		for (i = 0; i < l; i++) {
 			dataArray[i].alpha = ((dataArray[i].alpha - minA) * ratioA) + toMin;
 			dataArray[i].l = ((dataArray[i].l - minL) * ratioL) + toMin;
+			dataArray[i].z = Math.max(dataArray[i].alpha, dataArray[i].l) * 100;
 		}
 	}
 
@@ -262,9 +265,21 @@ define(
 			this.normalizeData(this.data);
 		}
 
+		this.pushBrightStarsForward();
 		this.generateNormalMap(this.data);
 		this.generateBrightness(this.data);
 		this.smoothBrightnes(this.data);
+	}
+
+	// --------------------------------------------
+	// bit of a hack to ensure bright stars do not appear totaly behind the nebula
+	LayerNebula.prototype.pushBrightStarsForward = function () {
+		var w = this.canvas.width;
+		for (var i = 0; i < this.brightStars.length; i++) {
+			var l = this.brightStars[i];
+			var z = this.data[l.x + (l.y * w)].z;
+			l.tz = Math.max(z+10+l.starRealRadius, l.z);
+		}
 	}
 
 	// --------------------------------------------
@@ -344,6 +359,7 @@ define(
 				var bottomRight = data[px + (py * w)].brightness;
 
 				data[j].smoothBrightness = (topLeft + top + topRight + left + center + right + bottomLeft + bottom + bottomRight) / 9;
+				//data[j].smoothBrightness = center;
 			}
 		}
 	}
@@ -355,6 +371,7 @@ define(
 		var ctx = this.canvas.getContext("2d");
 
 		this.generateNebulaData();
+
 
 		var heightColourArray = this.generateHeightColourArrayFromDataArray(this.data);
 		this.colourArrayToCanvas(heightColourArray, this.canvasHeight);
@@ -373,7 +390,7 @@ define(
 		nebulaColourArray = undefined;
 
 		this.data = undefined;
-		
+
 		this.settings.layer = this;
 
 		this.status = Layer.Status.Success;

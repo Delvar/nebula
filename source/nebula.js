@@ -132,7 +132,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 			tBrightStar.x = Math.floor(seedRandom.between(0, settings.realWidth));
 			tBrightStar.y = Math.floor(seedRandom.between(0, settings.realHeight));
-			tBrightStar.z = Math.floor(seedRandom.between(10, 100));
+			tBrightStar.z = Math.floor(seedRandom.between(10, 150));
 
 			tBrightStar.realWidth = tBrightStar.realHeight = tBrightStar.glowRealRadius * 2;
 
