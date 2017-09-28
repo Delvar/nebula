@@ -8,9 +8,9 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula',
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2',
 		'Random/SeedRandom'],
-	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula) {
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2) {
 
 	seedRandom = new Random.SeedRandom();
 
@@ -85,6 +85,19 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			settings.fast = 1;
 		}
 
+		if (typeof(queryVars['nebulaMode']) !== 'undefined') {
+			settings.nebulaMode = parseInt(queryVars['nebulaMode']);
+		}
+		if (settings.nebulaMode == undefined || settings.nebulaMode == '') {
+			settings.nebulaMode = 1;
+		}
+		
+		if (settings.nebulaMode == 2) {
+			LayerNebula = LayerNebula2;
+		} else {
+			// do nothing!
+		}
+		
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
 		settings.realHeight = Math.floor(settings.height / settings.pixleScale);
 
@@ -185,7 +198,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		settings.nebulas = nebulas;
 
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&seed=' + settings.seed;
 		console.log(settings);
 	}
 
@@ -290,6 +303,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	function processLayers() {
 		for (var i = 0; i < layers.length; i++) {
 			if (layers[i].status == Layer.Status.ReadyForProcessing) {
+				//console.log(layers[i]);
 				layers[i].startProcessing();
 				compositLayersToOutput();
 				setTimeout(processLayers, 1);
@@ -298,7 +312,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		}
 		var spinner = document.getElementById("spinner");
 		spinner.style.display = 'none';
+		var t1 = performance.now();
+		console.log("Render took " + Math.floor(t1 - t0) + " milliseconds.");
 	}
+	var t0 = performance.now();
+	
 	setTimeout(processLayers, 1);
 
 });

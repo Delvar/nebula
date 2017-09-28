@@ -76,17 +76,31 @@ define(
 		for (var y = 0, j = 0; y < this.canvas.height; y++) {
 			for (var x = 0; x < this.canvas.width; x++, j++) {
 				d = dataArray[j];
-				//d.brightness
 				var cBrightness = this.clamp(0, d.smoothBrightness, 1);
-				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness-1)),2), d.alpha);
-				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness)),2), d.alpha);
-				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha, d.alpha);
-				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 5), d.alpha);
+				var colour = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (d.alpha * Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 5), Math.max(d.alpha, d.l));
+
+				// apply dark matter & brightness
+				colour.r = this.interp(colour.r * cBrightness, 0, d.l);
+				colour.g = this.interp(colour.g * cBrightness, 0, d.l);
+				colour.b = this.interp(colour.b * cBrightness, 0, d.l);
+				m[j] = colour;
+				
+				//new Colour.rgba(colour.r * cBrightness, colour.g * cBrightness, colour.b * cBrightness, d.alpha);
+				//var colour_light = new Colour.rgba(colour.r * cBrightness, colour.g * cBrightness, colour.b * cBrightness, d.alpha);
+				/*
+					//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness-1)),2), d.alpha);
+					//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness)),2), d.alpha);
+					//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha, d.alpha);
+				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (d.alpha * Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 5), d.alpha);
 				var tc2 = new Colour.rgba(tc.r * cBrightness, tc.g * cBrightness, tc.b * cBrightness, d.alpha);
-				m[j] = new Colour.rgba(this.interp(tc2.r, 0, d.l), this.interp(tc2.g, 0, d.l), this.interp(tc2.b, 0, d.l), Math.max(d.alpha, d.l));
-				//var dlb = 2-d.brightness;//Math.min(d.l,d.brightness);
-				//m[j] = new Colour.rgba(this.interp(tc.r, 0, d.l), this.interp(tc.g, 0, d.l), this.interp(tc.b, 0, d.l), Math.max(d.alpha, d.l));
-				//m[j] = new Colour.rgba( this.clamp(0,tc.r * d.brightness,1), this.clamp(0,tc.g * d.brightness,1), this.clamp(0,tc.b * d.brightness,1), Math.max(d.alpha, d.l));
+				var lightAlpha = this.clamp(0, (Math.sqrt(Math.max(0, d.smoothBrightness - 2)) / 5)* d.alpha * 2, 1) ;
+					//var lightAlpha = this.clamp(0, d.alpha+(d.alpha * this.clamp(0,Math.max(0, d.smoothBrightness - 2),1)),1);
+					//var lightAlpha = this.clamp(0, (d.alpha * 2 * this.clamp(0,Math.max(0, d.smoothBrightness - 2),1)),1);
+				m[j] = new Colour.rgba(this.interp(tc2.r, 0, d.l), this.interp(tc2.g, 0, d.l), this.interp(tc2.b, 0, d.l), Math.max(d.alpha, d.l, lightAlpha));
+					//var dlb = 2-d.brightness;//Math.min(d.l,d.brightness);
+					//m[j] = new Colour.rgba(this.interp(tc.r, 0, d.l), this.interp(tc.g, 0, d.l), this.interp(tc.b, 0, d.l), Math.max(d.alpha, d.l));
+					//m[j] = new Colour.rgba( this.clamp(0,tc.r * d.brightness,1), this.clamp(0,tc.g * d.brightness,1), this.clamp(0,tc.b * d.brightness,1), Math.max(d.alpha, d.l));
+				*/
 			}
 		}
 		return m;
@@ -212,12 +226,12 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.normalizeData = function (dataArray) {
-		var toMin = 0;
-		var toMax = 1;
 		var minA = dataArray[0].alpha;
 		var maxA = dataArray[0].alpha;
 		var minL = dataArray[0].l;
 		var maxL = dataArray[0].l;
+		var minZ = dataArray[0].z;
+		var maxZ = dataArray[0].z;
 		var i;
 		var l = dataArray.length;
 		for (i = 0; i < l; i++) {
@@ -225,15 +239,17 @@ define(
 			maxA = Math.max(maxA, dataArray[i].alpha);
 			minL = Math.min(minL, dataArray[i].l);
 			maxL = Math.max(maxL, dataArray[i].l);
+			minZ = Math.min(minZ, dataArray[i].z);
+			maxZ = Math.max(maxZ, dataArray[i].z);
 		}
-		var range = toMax - toMin;
-		var ratioA = range / (maxA - minA);
-		var ratioL = range / (maxL - minL);
+		var ratioA = 1 / (maxA - minA);
+		var ratioL = 1 / (maxL - minL);
+		var ratioZ = 100 / (maxZ - minZ);
 
 		for (i = 0; i < l; i++) {
-			dataArray[i].alpha = ((dataArray[i].alpha - minA) * ratioA) + toMin;
-			dataArray[i].l = ((dataArray[i].l - minL) * ratioL) + toMin;
-			dataArray[i].z = Math.max(dataArray[i].alpha, dataArray[i].l) * 100;
+			dataArray[i].alpha = ((dataArray[i].alpha - minA) * ratioA);
+			dataArray[i].l = ((dataArray[i].l - minL) * ratioL);
+			dataArray[i].z = ((dataArray[i].z - minZ) * ratioZ);
 		}
 	}
 
@@ -287,21 +303,8 @@ define(
 	LayerNebula.prototype.generateNormalMap = function (data) {
 		var w = this.canvas.width;
 		var h = this.canvas.height;
-		/*var minDx = 9999,
-		maxDx = 0,
-		minDy = 9999,
-		maxDy = 0;*/
 		for (var y = 0, j = 0; y < h; y++) {
 			for (var x = 0; x < w; x++, j++) {
-				/*
-				var c = data[j].alpha;
-				var ix = ((x + 1) < w) ? (x + 1) : x;
-				var iy = ((y + 1) < h) ? (y + 1) : y;
-				var dx = c - data[ix + (y * w)].alpha;
-				var dy = c - data[x + (iy * w)].alpha;
-				data[j].normal = (new Vector3(dx, -dy, -0.005)).normalizeOverwrite();
-				 */
-
 				var px = ((x + 1) < w) ? (x + 1) : x;
 				var py = ((y + 1) < h) ? (y + 1) : y;
 				var nx = ((x - 1) >= 0) ? (x - 1) : x;
@@ -323,15 +326,8 @@ define(
 				var dy = (bottomLeft + 2.0 * bottom + bottomRight) - (topLeft + 2.0 * top + topRight);
 				var dz = -1;
 				data[j].normal = (new Vector3(dx, dy, dz)).normalizeOverwrite();
-
-				/*minDx = Math.min(minDx, dx);
-				maxDx = Math.max(maxDx, dx);
-				minDy = Math.min(minDy, dy);
-				maxDy = Math.max(maxDy, dy);*/
 			}
 		}
-
-		//console.log('minDx', minDx, 'maxDx', maxDx, 'minDy', minDy, 'maxDy', maxDy);
 	}
 
 	// --------------------------------------------
@@ -359,7 +355,6 @@ define(
 				var bottomRight = data[px + (py * w)].brightness;
 
 				data[j].smoothBrightness = (topLeft + top + topRight + left + center + right + bottomLeft + bottom + bottomRight) / 9;
-				//data[j].smoothBrightness = center;
 			}
 		}
 	}
@@ -371,7 +366,6 @@ define(
 		var ctx = this.canvas.getContext("2d");
 
 		this.generateNebulaData();
-
 
 		var heightColourArray = this.generateHeightColourArrayFromDataArray(this.data);
 		this.colourArrayToCanvas(heightColourArray, this.canvasHeight);

@@ -27,6 +27,7 @@
             <File name="source\nebula.js" />
             <File name="source\Noise.js" />
             <File name="source\Random.js" />
+            <File name="source\Vector3.js" />
         </Folder>
         <File name="index.html" />
         <File name="LICENSE" />
