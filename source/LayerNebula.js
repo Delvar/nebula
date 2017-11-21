@@ -35,14 +35,14 @@ define(
 
 	LayerNebula.prototype.getBrightnessAt = function (x, y, z, normal, alpha, brightStars) {
 		var brightness = 0;
-		
+
 		for (var i = 0; i < brightStars.length; i++) {
 			var l = brightStars[i];
-			var v = new Vector3(x - l.x, y - l.y,z - l.tz);
-			var sqMag = v.squareMagnitude() * 10;
+			var v = new Vector3(x - l.x, (y - l.y) * (this.canvas.height / this.canvas.width), z - l.tz);
+			var sqMag = v.squareMagnitude() * 400;
 			v.normalizeOverwrite();
 			var dotProduct = normal.dotProduct(v);
-			brightness += ((l.brightness*0.1) / sqMag) * dotProduct
+			brightness += (l.brightness / sqMag) * dotProduct
 		}
 		return brightness + this.settings.ambiant;
 	}
@@ -50,7 +50,7 @@ define(
 	LayerNebula.prototype.generateBrightness = function (dataArray) {
 		for (var y = 0, j = 0; y < this.canvas.height; y++) {
 			for (var x = 0; x < this.canvas.width; x++, j++) {
-				dataArray[j].brightness = this.getBrightnessAt(x/this.canvas.width, y/this.canvas.height, dataArray[j].z, dataArray[j].normal, dataArray[j].alpha, this.brightStars);
+				dataArray[j].brightness = this.getBrightnessAt(x / this.canvas.width, y / this.canvas.height, dataArray[j].z * 0.25, dataArray[j].normal, dataArray[j].alpha, this.brightStars);
 			}
 		}
 	};
@@ -75,13 +75,27 @@ define(
 			for (var x = 0; x < this.canvas.width; x++, j++) {
 				d = dataArray[j];
 				var cBrightness = this.clamp(0, d.smoothBrightness, 1);
-				var colour = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (d.alpha * Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 5), Math.max(d.alpha, d.l));
 
+				/*
+				//var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, this.clamp(0, d.alpha + (Math.max(0,d.smoothBrightness-1)),2), d.alpha);
+				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (Math.sqrt(Math.max(0, d.smoothBrightness - 1))/5), d.alpha);
+				var tc2 = new Colour.rgba(tc.r * cBrightness, tc.g * cBrightness, tc.b * cBrightness, d.alpha);
+				m[j] = new Colour.rgba(this.interp(tc2.r, 0, d.l), this.interp(tc2.g, 0, d.l), this.interp(tc2.b, 0, d.l), Math.max(d.alpha, d.l));
+				 */
+
+				var colour = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (d.alpha * Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 2.5), Math.max(d.alpha, d.l));
 				// apply dark matter & brightness
 				colour.r = this.interp(colour.r * cBrightness, 0, d.l);
 				colour.g = this.interp(colour.g * cBrightness, 0, d.l);
 				colour.b = this.interp(colour.b * cBrightness, 0, d.l);
 				m[j] = colour;
+
+				/*
+				var tc = Colour.hslaToRgba((c.h + (d.dHue * this.settings.hueFactor)) % 1, c.s, d.alpha + (d.alpha * Math.sqrt(Math.max(0, d.smoothBrightness - 1)) / 2.5), d.alpha);
+				var tc2 = new Colour.rgba(tc.r * cBrightness, tc.g * cBrightness, tc.b * cBrightness, d.alpha);
+				var lightAlpha = this.clamp(0, (Math.sqrt(Math.max(0, d.smoothBrightness - 2)) / 2.5) * d.alpha * 2, 1);
+				m[j] = new Colour.rgba(this.interp(tc2.r, 0, d.l), this.interp(tc2.g, 0, d.l), this.interp(tc2.b, 0, d.l), Math.max(d.alpha, d.l, lightAlpha));
+				 */
 			}
 		}
 		return m;
@@ -274,8 +288,8 @@ define(
 		var w = this.canvas.width;
 		for (var i = 0; i < this.brightStars.length; i++) {
 			var l = this.brightStars[i];
-			var z = this.data[l.realX + (l.realY * w)].z;
-			l.tz = Math.max(z+0.2, l.z);
+			var z = this.data[l.realX + (l.realY * w)].z * 0.25;
+			l.tz = Math.max(z + 0.01, l.z / 2);
 		}
 	}
 
@@ -305,7 +319,7 @@ define(
 
 				var dx = (topRight + 2.0 * right + bottomRight) - (topLeft + 2.0 * left + bottomLeft);
 				var dy = (bottomLeft + 2.0 * bottom + bottomRight) - (topLeft + 2.0 * top + topRight);
-				var dz = -1*(1920/this.canvas.width);
+				var dz = -1 * (1920 / this.canvas.width);
 				data[j].normal = (new Vector3(dx, dy, dz)).normalizeOverwrite();
 			}
 		}

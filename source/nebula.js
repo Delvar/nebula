@@ -115,7 +115,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		};
 
 		seedRandom.setSeed(brightStar.seed);
-		brightStar.maxTotalBrightness = seedRandom.between(0, 2);
+//		brightStar.maxTotalBrightness = seedRandom.between(0, 2);
+brightStar.maxTotalBrightness = seedRandom.between(1, 10);
 		var brightStars = [];
 
 		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness; i++) {
@@ -131,7 +132,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			
 			tBrightStar.x = seedRandom.between(0, 1);
 			tBrightStar.y = seedRandom.between(0, 1);
-			tBrightStar.z = seedRandom.between(0, 2);
+			tBrightStar.z = seedRandom.between(0, 1);
 			
 			tb += (tBrightStar.glowRadius * tBrightStar.glowRadius * tBrightStar.brightness);
 
