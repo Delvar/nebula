@@ -1,8 +1,8 @@
 define(
 	'LayerNebula2',
-	['Layer', 'Colour', 'Noise', 'Vector3',
+	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
 		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
-	function (Layer, Colour, Noise, Vector3) {
+	function (Layer, Colour, Noise, Vector3, Random) {
 	"use strict";
 
 	function LayerNebula(canvas, canvasNormal, canvasDensity, canvasDirectLight, settings, brightStars, canvasBacklight, canvasDepth) {
@@ -25,9 +25,7 @@ define(
 		this.backlightArray = new Float32Array(this.canvas.width * this.canvas.height);
 		this.normalArray = new Array(this.canvas.width * this.canvas.height);
 
-		//this.maxDepth = this.canvas.width/4;
-		//this.scale = 1920/this.canvas.width;
-
+		this.seedRandom = new Random.SeedRandom(settings.seed);
 	}
 
 	LayerNebula.prototype = Object.create(Layer.prototype);
@@ -57,11 +55,6 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale) {
-
-		//var roughDepth = (Noise.perlin2(originalX / 750 + offsetX, originalY / 750 + offsetY) + 1) * 0.5;
-
-		//scale = scale * (1-roughDepth);
-
 		var x = originalX / scale + offsetX;
 		var y = originalY / scale + offsetY;
 
@@ -77,12 +70,10 @@ define(
 
 		var dist = getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2);
 		var dHue = dist.nx * dist.ny;
-		//var value = Noise.Blender.TwoD.FastVoronoi_F1(dist.x, dist.y) * tweakFactor;
 		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist.x, dist.y) * tweakFactor;
 
-		//var value = fakeVoronoi(dist.x, dist.y);
-		var pwHL = this.settings.powLacunarityRoughness; // * (0.5+(roughDepth*0.5));
-		var pwr = pwHL; //* roughDepth;
+		var pwHL = this.settings.powLacunarityRoughness;
+		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 
 		x *= lacunarity;
@@ -109,14 +100,7 @@ define(
 		}
 
 		r[0] = Math.pow(value, alphaExponent);
-		//r[1] = roughDepth + (value*0.05);//((roughDepth * 0.9) + (value * 0.1));
-		//r[1] = ((roughDepth * 0.5) + (value * 0.5));
-		r[1] = r[0] * 0.25;
-
-		//r[1] = (r[1] + (r[0] * 0.005));
-		//r[1] = Math.abs(Math.sin((originalX / this.canvas.width) * Math.PI * 10) * Math.sin((originalY / this.canvas.height) * Math.PI * 10));
-		//r[1] =  Math.sin(((originalY+originalX ) / this.canvas.width) * Math.PI * 8);//, Math.cos((originalY / this.canvas.width) * Math.PI) * 8);
-		//r[1] = this.clamp(0,r[1],1);
+		r[1] = value * 0.5;
 
 		/* // Make depth domes...
 		var numberOfDomes = 1;
@@ -132,21 +116,6 @@ define(
 		 */
 
 		r[2] = dHue;
-
-		/*
-
-		x = (x - this.settings.offsetX) * this.settings.scale;
-		y = (y - this.settings.offsetY) * this.settings.scale;
-
-		var r = {
-		alpha: Math.sin((x / this.canvas.width) * Math.PI * 10) * Math.sin((y / this.canvas.height) * Math.PI * 10),
-		l: 0,
-		dHue: 0
-		};
-
-		r.alpha = Math.pow(r.alpha, 10);
-		return r;
-		 */
 		return r;
 	}
 
@@ -154,7 +123,7 @@ define(
 
 	LayerNebula.prototype.normalizeData = function (minAlpha, maxAlpha, minDepth, maxDepth) {
 		var ratioAlpha = 1 / (maxAlpha - minAlpha);
-		var ratioDepth = 0.25 / (maxDepth - minDepth);
+		var ratioDepth = 0.5 / (maxDepth - minDepth);
 		var l = this.canvas.width * this.canvas.height;
 
 		for (var i = 0; i < l; i++) {
@@ -194,10 +163,10 @@ define(
 		console.log('normalize: ' + ((maxAlpha - minAlpha) < 0.5) + ' || ' + (minAlpha > 0.5) + ' || ' + (maxAlpha > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
 		console.log('maxAlpha: ', maxAlpha, 'minAlpha', minAlpha, 'maxDepth', maxDepth, 'minDepth', minDepth);
 
-		//if (((maxAlpha - minAlpha) < 0.5) || (minAlpha > 0.5) || (maxAlpha > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
-		s.normalize = true;
-		this.normalizeData(minAlpha, maxAlpha, minDepth, maxDepth);
-		//}
+		if (((maxAlpha - minAlpha) < 0.5) || (minAlpha > 0.5) || (maxAlpha > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
+			s.normalize = true;
+			this.normalizeData(minAlpha, maxAlpha, minDepth, maxDepth);
+		}
 	}
 
 	// --------------------------------------------
@@ -268,7 +237,7 @@ define(
 				var nx = Math.pow(Math.pow(dx, -2) + 1, -0.5) * Math.sign(dx);
 				var ny = Math.pow(Math.pow(dy, -2) + 1, -0.5) * Math.sign(dy);
 				//var nz = (1 / this.maxDepth) * Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
-				var nz = Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
+				var nz = 0.5 * Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
 
 				this.normalArray[j] = (new Vector3(nx, ny, nz)).normalizeOverwrite();
 				//==============
@@ -296,11 +265,9 @@ define(
 	LayerNebula.prototype.pushBrightStarsForward = function () {
 		var w = this.canvas.width;
 		for (var i = 0; i < this.brightStars.length; i++) {
-			//var l = this.brightStars[i];
-			//l.tz = Math.max(this.depthArray[l.realX + (l.realY * w)] + 0.05, l.z);
 			var l = this.brightStars[i];
 			var z = this.depthArray[l.realX + (l.realY * w)];
-			l.tz = Math.max(z + 0.01, l.z / 2);
+			l.tz = Math.max(z + this.seedRandom.between(0.005, 0.02), l.z);
 		}
 	}
 
@@ -334,9 +301,7 @@ define(
 			 */
 
 			var v = new Vector3(l.x - x, (l.y - y) * (this.canvas.height / this.canvas.width), l.tz - depth);
-			//var v = new Vector3(x - l.x, (y - l.y) * (this.canvas.height / this.canvas.width), depth - l.tz);
-			var sqMag = v.squareMagnitude() * 400;
-			//var mag = v.magnitude();
+			var sqMag = v.squareMagnitude() * 250;
 			v.normalizeOverwrite();
 			var dotProduct = normal.dotProduct(v);
 			directLight += (l.brightness / sqMag) * dotProduct
@@ -349,7 +314,6 @@ define(
 	LayerNebula.prototype.generateDirectLight = function (dataArray) {
 		for (var y = 0, j = 0; y < this.canvas.height; y++) {
 			for (var x = 0; x < this.canvas.width; x++, j++) {
-				//this.directLightArray[j] = this.getDirectLightAt(x, y, j);
 				this.directLightArray[j] = this.getDirectLightAt(x / this.canvas.width, y / this.canvas.height, j);
 			}
 		}

@@ -79,17 +79,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			settings.height = window.innerHeight;
 		}
 
-		if (typeof(queryVars['fast']) !== 'undefined') {
-			settings.fast = clamp(0, parseInt(queryVars['fast']), 3);
-		} else {
-			settings.fast = 1;
-		}
-
 		if (typeof(queryVars['nebulaMode']) !== 'undefined') {
 			settings.nebulaMode = parseInt(queryVars['nebulaMode']);
 		}
 		if (settings.nebulaMode == undefined || settings.nebulaMode == '') {
-			settings.nebulaMode = 1;
+			settings.nebulaMode = 2;
 		}
 
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
@@ -115,27 +109,32 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		};
 
 		seedRandom.setSeed(brightStar.seed);
-//		brightStar.maxTotalBrightness = seedRandom.between(0, 2);
-brightStar.maxTotalBrightness = seedRandom.between(1, 10);
+		brightStar.maxTotalBrightness = seedRandom.between(0, 2);
+		//brightStar.maxTotalBrightness = seedRandom.between(10, 10);
 		var brightStars = [];
-
-		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness; i++) {
+		var lastGlowRadius = 0;
+		
+		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness && i < 25; i++) {
 			var tBrightStar = {};
 			tBrightStar.name = 'brightStar-' + i,
 			tBrightStar.seed = settings.seed + '-' + tBrightStar.name;
 			seedRandom.setSeed(tBrightStar.seed);
 
 			tBrightStar.h = seedRandom.between(0, 1);
-			tBrightStar.brightness = seedRandom.between(0.5, 1);
+			tBrightStar.brightness = seedRandom.between(1 , 1);
+			
 			tBrightStar.starRadius = seedRandom.between(1 / 256, 5 / 256);
-			tBrightStar.glowRadius = seedRandom.between(16 / 256, 1);
+			tBrightStar.glowRadius = Math.pow(seedRandom.between(0.2, Math.max(brightStar.maxTotalBrightness-tb,0.2) ),4);
+			tBrightStar.glowRadius = Math.max(0.05, Math.min(tBrightStar.glowRadius, 1));
+			tBrightStar.brightness = Math.max(tBrightStar.glowRadius,0.05);
 			
 			tBrightStar.x = seedRandom.between(0, 1);
 			tBrightStar.y = seedRandom.between(0, 1);
 			tBrightStar.z = seedRandom.between(0, 1);
+			tBrightStar.z= tBrightStar.z * tBrightStar.z * 2;
 			
-			tb += (tBrightStar.glowRadius * tBrightStar.glowRadius * tBrightStar.brightness);
-
+			tb += tBrightStar.glowRadius*tBrightStar.glowRadius;
+			console.log(tb, tBrightStar.glowRadius);
 			brightStars.push(tBrightStar);
 		}
 		settings.brightStar = brightStar;
@@ -247,7 +246,7 @@ brightStar.maxTotalBrightness = seedRandom.between(1, 10);
 		layers.push(tLayer);
 	}
 	
-	var supersampling = 2;
+	var supersampling = 1;
 	var maxGlowRadius = (((settings.width/7.5)*supersampling)/settings.pixleScale)*2;
 		
 	for (var i = 0; i < settings.brightStars.length; i++) {
