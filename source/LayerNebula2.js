@@ -304,9 +304,11 @@ define(
 			var sqMag = v.squareMagnitude() * 250;
 			v.normalizeOverwrite();
 			var dotProduct = normal.dotProduct(v);
+			dotProduct = Math.pow(dotProduct, 5) * Math.sign(dotProduct);
 			directLight += (l.brightness / sqMag) * dotProduct
 		}
-		return directLight + this.settings.ambiant;
+		var dotProduct = normal.dotProduct(new Vector3(0.5 - x, (0.5 - y) * (this.canvas.height / this.canvas.width), 10).normalizeOverwrite());
+		return directLight + (Math.pow(Math.max(dotProduct, 0), 2 + (10 * density)) * this.settings.ambiant);
 	}
 
 	// --------------------------------------------
