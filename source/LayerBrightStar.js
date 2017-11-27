@@ -20,7 +20,6 @@ define(
 	LayerBrightStar.prototype.constructor = LayerBrightStar;
 
 	LayerBrightStar.prototype.drawLine = function (aScale, bScale, ctx, rotation, brightness) {
-		//brightness = brightness * 2;
 		var width = this.canvas.width;
 		var starRealRadius = this.starRadius * width;
 		var center = width / 2; //realRadius
@@ -95,7 +94,6 @@ define(
 		this.drawLine(this.starRadius, 1, ctx, Math.PI / 2, this.brightness);
 
 		//Draw random lines
-
 		for (var i = 0; i < Math.PI * 2; i = i + this.seedRandom.between(Math.PI / (4 + (40 * this.brightness)), Math.PI / (2 + (20 * this.brightness)))) {
 			var sT = this.seedRandom.between(0, 1);
 			var length = (Math.pow(sT, 3) * 0.8) + (this.starRadius/2);
