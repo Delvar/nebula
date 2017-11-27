@@ -48,20 +48,22 @@ define(
 			ctx.moveTo(startX, startY);
 			ctx.lineTo(endX, endY);
 			ctx.stroke();
-		} /*else if (lineWidth <= 3) { //Fill linear
-			//console.log("lineWidth <= 3", lineWidth, this.seed);
-			var linearGradient = ctx.createLinearGradient(-center, -center, -center, center);
-			linearGradient.addColorStop(0, Colour.hslaText(this.h, 1, 0.7, 0));
-			linearGradient.addColorStop(0.25, Colour.hslaText((this.h + 0.5) % 1, 1, 0.8, 0.25 * brightness));
-			linearGradient.addColorStop(0.5, Colour.hslaText(this.h, 1, 1, 0.5 * brightness));
-			linearGradient.addColorStop(0.75, Colour.hslaText((this.h + 0.5) % 1, 1, 0.8, 0.25 * brightness));
-			linearGradient.addColorStop(1, Colour.hslaText(this.h, 1, 0.7, 0));
-			ctx.fillStyle = linearGradient;
-			ctx.setTransform(1, 0, 0, 1, center, center);
-			ctx.rotate(rotation);
-			ctx.scale(aScale, bScale);
-			ctx.fillRect(-center, -center, width, width);
-		} */ else { //Fill radial
+		}
+		/*else if (lineWidth <= 3) { //Fill linear
+		//console.log("lineWidth <= 3", lineWidth, this.seed);
+		var linearGradient = ctx.createLinearGradient(-center, -center, -center, center);
+		linearGradient.addColorStop(0, Colour.hslaText(this.h, 1, 0.7, 0));
+		linearGradient.addColorStop(0.25, Colour.hslaText((this.h + 0.5) % 1, 1, 0.8, 0.25 * brightness));
+		linearGradient.addColorStop(0.5, Colour.hslaText(this.h, 1, 1, 0.5 * brightness));
+		linearGradient.addColorStop(0.75, Colour.hslaText((this.h + 0.5) % 1, 1, 0.8, 0.25 * brightness));
+		linearGradient.addColorStop(1, Colour.hslaText(this.h, 1, 0.7, 0));
+		ctx.fillStyle = linearGradient;
+		ctx.setTransform(1, 0, 0, 1, center, center);
+		ctx.rotate(rotation);
+		ctx.scale(aScale, bScale);
+		ctx.fillRect(-center, -center, width, width);
+		} */
+		else { //Fill radial
 			//console.log("lineWidth > 3", lineWidth, this.seed);
 			var radialGradient = ctx.createRadialGradient(0, 0, starRealRadius, 0, 0, center);
 			radialGradient.addColorStop(0, Colour.hslaText(this.h, 1, 1, 0.5 * brightness));
@@ -94,19 +96,17 @@ define(
 
 		//Draw random lines
 
-		//var invBrightness = 1-this.brightness;
-		for (var i = 0; i < Math.PI * 2; i = i + this.seedRandom.between(Math.PI / (4 + (30 * this.brightness)), Math.PI / (2 + (10 * this.brightness)))) {
+		for (var i = 0; i < Math.PI * 2; i = i + this.seedRandom.between(Math.PI / (4 + (40 * this.brightness)), Math.PI / (2 + (20 * this.brightness)))) {
 			var sT = this.seedRandom.between(0, 1);
-			var length = (Math.pow(sT, 3) * 0.8) + (this.starRadius * 2);
-			var width = (1 - sT) * this.starRadius * 2;
-			//ctx.globalAlpha = this.seedRandom.between(0.1, 1);
+			var length = (Math.pow(sT, 3) * 0.8) + (this.starRadius/2);
+			var width = (1 - Math.pow(sT, 2)) * (this.starRadius * 2);
 			this.drawLine(width, length, ctx, i, this.brightness * this.seedRandom.between(0.1, 1));
 		}
-		//ctx.globalAlpha = 1;
 
 		//faint glow
 		var radialGradient = ctx.createRadialGradient(0, 0, starRealRadius, 0, 0, radius);
-		radialGradient.addColorStop(0, Colour.hslaText(this.h, 1, 0.9, 0.1));
+		radialGradient.addColorStop(0, Colour.hslaText(this.h, 1, 0.7, 0.5));
+		radialGradient.addColorStop(this.starRadius*1.25, Colour.hslaText(this.h, 1, 0.9, 0.1));
 		radialGradient.addColorStop(1, Colour.hslaText(this.h, 1, 0.8, 0));
 		ctx.setTransform(1, 0, 0, 1, center, center);
 		ctx.fillStyle = radialGradient;
