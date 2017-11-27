@@ -121,12 +121,12 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			seedRandom.setSeed(tBrightStar.seed);
 
 			tBrightStar.h = seedRandom.between(0, 1);
-			tBrightStar.brightness = seedRandom.between(1 , 1);
+			tBrightStar.brightness = seedRandom.between(0.1 , 1);
 			
 			tBrightStar.starRadius = seedRandom.between(1 / 256, 5 / 256);
-			tBrightStar.glowRadius = Math.pow(seedRandom.between(0.2, Math.max(brightStar.maxTotalBrightness-tb,0.2) ),4);
+			var t = Math.pow(seedRandom.between(0,1),3);
+			tBrightStar.glowRadius = 0.05 + (t*(brightStar.maxTotalBrightness-tb)) ;
 			tBrightStar.glowRadius = Math.max(0.05, Math.min(tBrightStar.glowRadius, 1));
-			tBrightStar.brightness = Math.max(tBrightStar.glowRadius,0.05);
 			
 			tBrightStar.x = seedRandom.between(0, 1);
 			tBrightStar.y = seedRandom.between(0, 1);
@@ -134,7 +134,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			tBrightStar.z= tBrightStar.z * tBrightStar.z * 2;
 			
 			tb += tBrightStar.glowRadius*tBrightStar.glowRadius;
-			console.log(tb, tBrightStar.glowRadius);
 			brightStars.push(tBrightStar);
 		}
 		settings.brightStar = brightStar;
@@ -255,12 +254,12 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		tSettings.realX = Math.floor(tSettings.x * settings.width);
 		tSettings.realY = Math.floor(tSettings.y * settings.height);
 		tSettings.realZ = Math.floor(tSettings.z * (settings.width/2));
-		tSettings.realWidth = tSettings.realHeight = Math.floor(tSettings.glowRadius * maxGlowRadius);
+		tSettings.realWidth = tSettings.realHeight = (Math.floor( (tSettings.glowRadius * maxGlowRadius) /2 )*2)+1; //ensure we have an odd number of pixles
 		
 		tCanvas = addCanvas(tSettings.name, container, tSettings.realWidth, tSettings.realWidth);
 		tLayer = new LayerBrightStar(tCanvas, tSettings.seed, tSettings.h, tSettings.brightness, tSettings.starRadius, tSettings.glowRadius);
 		tLayer.compositeOperation = 'lighter';
-		tLayer.setTransform(1/supersampling, 1/supersampling, tSettings.realX, tSettings.realY, tSettings.realWidth/2, tSettings.realWidth/2);
+		tLayer.setTransform(1/supersampling, 1/supersampling, tSettings.realX, tSettings.realY, Math.floor(tSettings.realWidth/2), Math.floor(tSettings.realWidth/2));
 		layers.push(tLayer);
 	}
 
