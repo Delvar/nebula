@@ -8,9 +8,9 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2',
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerVignette',
 		'Random/SeedRandom'],
-	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2) {
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerVignette) {
 
 	seedRandom = new Random.SeedRandom();
 
@@ -52,7 +52,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		if (typeof(queryVars['seed']) !== 'undefined') {
 			settings.seed = queryVars['seed'];
 		}
-		if (settings.seed == undefined || settings.seed == '') {
+		if (settings.seed === undefined || settings.seed === '') {
 			settings.seed = getRandomString();
 		}
 
@@ -61,31 +61,38 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		if (typeof(queryVars['pixleScale']) !== 'undefined') {
 			settings.pixleScale = parseInt(queryVars['pixleScale']);
 		}
-		if (settings.pixleScale == undefined || settings.pixleScale == '') {
+		if (settings.pixleScale === undefined || settings.pixleScale === '') {
 			settings.pixleScale = 1;
 		}
 
 		if (typeof(queryVars['width']) !== 'undefined') {
 			settings.width = parseInt(queryVars['width']);
 		}
-		if (settings.width == undefined || settings.width == '') {
+		if (settings.width === undefined || settings.width === '') {
 			settings.width = window.innerWidth;
 		}
 
 		if (typeof(queryVars['height']) !== 'undefined') {
 			settings.height = parseInt(queryVars['height']);
 		}
-		if (settings.height == undefined || settings.height == '') {
+		if (settings.height === undefined || settings.height === '') {
 			settings.height = window.innerHeight;
 		}
 
 		if (typeof(queryVars['nebulaMode']) !== 'undefined') {
 			settings.nebulaMode = parseInt(queryVars['nebulaMode']);
 		}
-		if (settings.nebulaMode == undefined || settings.nebulaMode == '') {
+		if (settings.nebulaMode === undefined || settings.nebulaMode === '') {
 			settings.nebulaMode = 2;
 		}
 
+		if (typeof(queryVars['vignette']) !== 'undefined') {
+			settings.vignette = !( queryVars['vignette'] === 'false' );
+		}
+		if (settings.vignette === undefined || settings.vignette === '') {
+			settings.vignette = true;
+		}
+		
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
 		settings.realHeight = Math.floor(settings.height / settings.pixleScale);
 
@@ -175,8 +182,9 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		settings.nebula = nebula;
 		settings.nebulas = nebulas;
 
+		
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode +'&vignette=' + settings.vignette + '&seed=' + settings.seed;
 		console.log(settings);
 		
 		settings.ratioWidthHeight = settings.width/settings.height;
@@ -245,6 +253,13 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		layers.push(tLayer);
 	}
 	
+	if (settings.vignette) {
+		tCanvas = addCanvas("Vignette", container, settings.realWidth, settings.realHeight);
+		tLayer = new LayerVignette(tCanvas,0.5,Math.max(settings.realWidth/2,settings.realHeight/2),Math.min(settings.realWidth/2,settings.realHeight/2)*0.5);
+		tLayer.compositeOperation = 'multiply';
+		layers.push(tLayer);
+	}
+	
 	var supersampling = 1;
 	var maxGlowRadius = (((settings.width/7.5)*supersampling)/settings.pixleScale)*2;
 		
@@ -263,6 +278,14 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		layers.push(tLayer);
 	}
 
+	if (settings.vignette) {
+		tCanvas = addCanvas("Vignette", container, settings.realWidth, settings.realHeight);
+		tLayer = new LayerVignette(tCanvas,1,Math.max(settings.realWidth/2,settings.realHeight/2)*0.9,Math.min(settings.realWidth/2,settings.realHeight/2));
+		tLayer.compositeOperation = 'soft-light';
+		layers.push(tLayer);
+	}
+	
+	
 	// --------------------------------------------
 
 	for (var i = 0; i < document.styleSheets.length; i++) {
