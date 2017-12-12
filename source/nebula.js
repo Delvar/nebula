@@ -8,9 +8,9 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerVignette',
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerVignette', 'LayerMilkyWay',
 		'Random/SeedRandom'],
-	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerVignette) {
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerVignette, LayerMilkyWay) {
 
 	seedRandom = new Random.SeedRandom();
 
@@ -87,7 +87,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		}
 
 		if (typeof(queryVars['vignette']) !== 'undefined') {
-			settings.vignette = !( queryVars['vignette'] === 'false' );
+			settings.vignette = !(queryVars['vignette'] === 'false');
 		}
 		if (settings.vignette === undefined || settings.vignette === '') {
 			settings.vignette = true;
@@ -120,7 +120,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		//brightStar.maxTotalBrightness = seedRandom.between(10, 10);
 		var brightStars = [];
 		var lastGlowRadius = 0;
-		
+
 		for (var i = 0, tb = 0; tb <= brightStar.maxTotalBrightness && i < 25; i++) {
 			var tBrightStar = {};
 			tBrightStar.name = 'brightStar-' + i,
@@ -128,19 +128,19 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			seedRandom.setSeed(tBrightStar.seed);
 
 			tBrightStar.h = seedRandom.between(0, 1);
-			tBrightStar.brightness = seedRandom.between(0.1 , 1);
-			
+			tBrightStar.brightness = seedRandom.between(0.1, 1);
+
 			tBrightStar.starRadius = seedRandom.between(1 / 256, 5 / 256);
-			var t = Math.pow(seedRandom.between(0,1),3);
-			tBrightStar.glowRadius = 0.05 + (t*(brightStar.maxTotalBrightness-tb)) ;
+			var t = Math.pow(seedRandom.between(0, 1), 3);
+			tBrightStar.glowRadius = 0.05 + (t * (brightStar.maxTotalBrightness - tb));
 			tBrightStar.glowRadius = Math.max(0.05, Math.min(tBrightStar.glowRadius, 1));
-			
+
 			tBrightStar.x = seedRandom.between(0, 1);
 			tBrightStar.y = seedRandom.between(0, 1);
 			tBrightStar.z = seedRandom.between(0, 1);
-			tBrightStar.z= tBrightStar.z * tBrightStar.z * 2;
-			
-			tb += tBrightStar.glowRadius*tBrightStar.glowRadius;
+			tBrightStar.z = tBrightStar.z * tBrightStar.z * 2;
+
+			tb += tBrightStar.glowRadius * tBrightStar.glowRadius;
 			brightStars.push(tBrightStar);
 		}
 		settings.brightStar = brightStar;
@@ -163,7 +163,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			tNebula.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth * 2);
 			tNebula.roughness = seedRandom.between(0.4, 1);
 			tNebula.lacunarity = seedRandom.between(2, 4);
-			tNebula.powLacunarityRoughness = Math.pow(tNebula.lacunarity, -tNebula.roughness);
 			tNebula.octaves = seedRandom.between(5, 8);
 			tNebula.offsetX = seedRandom.between(0, 50000);
 			tNebula.offsetY = seedRandom.between(0, 50000);
@@ -182,13 +181,42 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		settings.nebula = nebula;
 		settings.nebulas = nebulas;
 
+		var milkyWay = {};
+		milkyWay.name = 'milkyWay';
+		milkyWay.seed = settings.seed + '-' + milkyWay.name;
+
+		seedRandom.setSeed(milkyWay.seed);
+
+		milkyWay.scale = seedRandom.between(settings.realWidth, settings.realWidth);
+		milkyWay.nScale = seedRandom.between(100, 200);
+		milkyWay.widthDevisor = seedRandom.between(1, 8);
+		milkyWay.gaussianMultiplier = seedRandom.between(0.05, 0.5);
+		milkyWay.gaussianMin = seedRandom.between(0, 0.6-milkyWay.gaussianMultiplier);
+		milkyWay.roughness = seedRandom.between(0.4, 1);
+		milkyWay.lacunarity = seedRandom.between(1.5, 3);
 		
+		milkyWay.octaves = seedRandom.between(5, 8);
+		milkyWay.offsetX = seedRandom.between(0, 50000);
+		milkyWay.offsetY = seedRandom.between(0, 50000);
+		milkyWay.alphaExponent = seedRandom.between(1, 5);
+		milkyWay.distortionFactor = seedRandom.between(0.5, 2);
+		milkyWay.distortionScale = seedRandom.between(0.5, 5);
+		milkyWay.hueFactor = seedRandom.between(-1, 1);
+		milkyWay.dHuePwr = seedRandom.between(0, 1);
+		
+		milkyWay.normalize = false;
+		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
+		milkyWay.rotation = seedRandom.between(0, Math.PI);
+		milkyWay.brightness = seedRandom.between(0.05, 0.7);
+
+		settings.milkyWay = milkyWay;
+
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode +'&vignette=' + settings.vignette + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&vignette=' + settings.vignette + '&seed=' + settings.seed;
 		console.log(settings);
-		
-		settings.ratioWidthHeight = settings.width/settings.height;
-		
+
+		settings.ratioWidthHeight = settings.width / settings.height;
+
 		console.log(settings.ratioWidthHeight);
 	}
 
@@ -228,64 +256,84 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	var tCanvas,
 	tSettings,
-	tLayer;
+	tLayer,
+	tCanvasDensity,
+	tCanvasDepth,
+	tCanvasDark,
+	tCanvasNormal,
+	tCanvasDirectLight;
 
+	// Milky Way
+	tSettings = settings.milkyWay;
+	var tw = Math.floor( Math.sqrt(Math.pow(settings.realWidth, 2) + Math.pow(settings.realHeight, 2)));
+	var th = Math.floor( tw / tSettings.widthDevisor );
+
+	tCanvasDensity = addCanvas(tSettings.name + '-density', container, tw, th);
+	tCanvasDepth = addCanvas(tSettings.name + '-depth', container, tw, th);
+	tCanvasDark = addCanvas(tSettings.name + '-dark', container, tw, th);
+	tCanvasDirectLight = addCanvas(tSettings.name + '-directLight', container, tw, th);
+	tCanvas = addCanvas(tSettings.name, container, tw, th);
+	tLayer = new LayerMilkyWay(tCanvas, tCanvasDensity, tCanvasDirectLight, tCanvasDepth, tCanvasDark, tSettings);
+	tLayer.setTransform(1, 1, settings.realWidth / 2, settings.realHeight / 2, Math.floor(tw / 2), Math.floor(th / 2), tSettings.rotation);
+	layers.push(tLayer);
+	
 	tSettings = settings.pointStars;
 	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
 	tLayer = new LayerPointStars(tCanvas, tSettings.seed, tSettings.density, tSettings.brightness);
+	tLayer.compositeOperation = 'lighter';
 	layers.push(tLayer);
 
 	tSettings = settings.bigStars;
 	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
 	tLayer = new LayerBigStars(tCanvas, tSettings.seed, tSettings.density);
+	tLayer.compositeOperation = 'lighter';
 	layers.push(tLayer);
 
 	for (var i = 0; i < settings.nebulas.length; i++) {
+		//break;
 		tSettings = settings.nebulas[i];
-		var tDensityCanvas = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
-		var tDepthCanvas = addCanvas(tSettings.name + '-depth', container, settings.realWidth, settings.realHeight);
-		var tNormalCanvas = addCanvas(tSettings.name + '-normal', container, settings.realWidth, settings.realHeight);
-		var tLightCanvas = addCanvas(tSettings.name + '-directLight', container, settings.realWidth, settings.realHeight);
-		var tBacklightCanvas = addCanvas(tSettings.name + '-backlight', container, settings.realWidth, settings.realHeight);
+		tCanvasDensity = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
+		tCanvasDepth = addCanvas(tSettings.name + '-depth', container, settings.realWidth, settings.realHeight);
+		tCanvasNormal = addCanvas(tSettings.name + '-normal', container, settings.realWidth, settings.realHeight);
+		tCanvasDirectLight = addCanvas(tSettings.name + '-directLight', container, settings.realWidth, settings.realHeight);
 
 		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
-		tLayer = new LayerNebula(tCanvas, tNormalCanvas, tDensityCanvas, tLightCanvas, tSettings, settings.brightStars, tBacklightCanvas, tDepthCanvas);
+		tLayer = new LayerNebula(tCanvas, tCanvasNormal, tCanvasDensity, tCanvasDirectLight, tCanvasDepth, tSettings, settings.brightStars);
 		layers.push(tLayer);
 	}
-	
+
 	if (settings.vignette) {
-		tCanvas = addCanvas("Vignette", container, settings.realWidth, settings.realHeight);
-		tLayer = new LayerVignette(tCanvas,0.5,Math.max(settings.realWidth/2,settings.realHeight/2),Math.min(settings.realWidth/2,settings.realHeight/2)*0.5);
+		tCanvas = addCanvas("Vignette-0", container, settings.realWidth, settings.realHeight);
+		tLayer = new LayerVignette(tCanvas, 0.25, Math.max(settings.realWidth / 2, settings.realHeight / 2), Math.min(settings.realWidth / 2, settings.realHeight / 2) * 0.5);
 		tLayer.compositeOperation = 'multiply';
 		layers.push(tLayer);
 	}
-	
+
 	var supersampling = 1;
-	var maxGlowRadius = (((settings.width/7.5)*supersampling)/settings.pixleScale)*2;
-		
+	var maxGlowRadius = (((settings.width / 7.5) * supersampling) / settings.pixleScale) * 2;
+
 	for (var i = 0; i < settings.brightStars.length; i++) {
 		tSettings = settings.brightStars[i];
-		
+
 		tSettings.realX = Math.floor(tSettings.x * settings.width);
 		tSettings.realY = Math.floor(tSettings.y * settings.height);
-		tSettings.realZ = Math.floor(tSettings.z * (settings.width/2));
-		tSettings.realWidth = tSettings.realHeight = (Math.floor( (tSettings.glowRadius * maxGlowRadius) /2 )*2)+1; //ensure we have an odd number of pixles
-		
+		tSettings.realZ = Math.floor(tSettings.z * (settings.width / 2));
+		tSettings.realWidth = tSettings.realHeight = (Math.floor((tSettings.glowRadius * maxGlowRadius) / 2) * 2) + 1; //ensure we have an odd number of pixles
+
 		tCanvas = addCanvas(tSettings.name, container, tSettings.realWidth, tSettings.realWidth);
 		tLayer = new LayerBrightStar(tCanvas, tSettings.seed, tSettings.h, tSettings.brightness, tSettings.starRadius, tSettings.glowRadius);
 		tLayer.compositeOperation = 'lighter';
-		tLayer.setTransform(1/supersampling, 1/supersampling, tSettings.realX, tSettings.realY, Math.floor(tSettings.realWidth/2), Math.floor(tSettings.realWidth/2));
+		tLayer.setTransform(1 / supersampling, 1 / supersampling, tSettings.realX, tSettings.realY, Math.floor(tSettings.realWidth / 2), Math.floor(tSettings.realWidth / 2));
 		layers.push(tLayer);
 	}
 
 	if (settings.vignette) {
-		tCanvas = addCanvas("Vignette", container, settings.realWidth, settings.realHeight);
-		tLayer = new LayerVignette(tCanvas,1,Math.max(settings.realWidth/2,settings.realHeight/2)*0.9,Math.min(settings.realWidth/2,settings.realHeight/2));
+		tCanvas = addCanvas("Vignette-1", container, settings.realWidth, settings.realHeight);
+		tLayer = new LayerVignette(tCanvas, 1, Math.max(settings.realWidth / 2, settings.realHeight / 2) * 0.9, Math.min(settings.realWidth / 2, settings.realHeight / 2));
 		tLayer.compositeOperation = 'soft-light';
 		layers.push(tLayer);
 	}
-	
-	
+
 	// --------------------------------------------
 
 	for (var i = 0; i < document.styleSheets.length; i++) {

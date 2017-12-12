@@ -172,7 +172,7 @@ define(
 
 		var value = noiseFunc(dist.x, dist.y) * tweakFactor;
 
-		var pwHL = this.settings.powLacunarityRoughness; //Math.pow(lacunarity, -roughness);
+		var pwHL = Math.pow(lacunarity, -roughness);
 		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 

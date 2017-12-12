@@ -69,15 +69,18 @@ define(
 		else { //Fill radial
 			//console.log("lineWidth > 3", lineWidth, this.seed);
 			var radialGradient = ctx.createRadialGradient(0, 0, starRealRadius, 0, 0, center);
+
 			radialGradient.addColorStop(0, c0);
 			radialGradient.addColorStop(0.5, c1);
 			radialGradient.addColorStop(1, c2);
+
 			ctx.fillStyle = radialGradient;
 			ctx.setTransform(1, 0, 0, 1, center, center);
 			ctx.rotate(rotation);
 			ctx.scale(aScale, bScale);
 			ctx.fillRect(-center, -center, width, width);
 		}
+
 	}
 
 	LayerBrightStar.prototype.startProcessing = function () {
@@ -89,6 +92,7 @@ define(
 		var center = radius;
 
 		ctx.save();
+
 		ctx.globalCompositeOperation = this.compositeOperation;
 
 		//Draw vertical line

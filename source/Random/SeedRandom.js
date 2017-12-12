@@ -116,6 +116,17 @@ define(
 		}
 		this.between = between;
 
+		function betweenPow(min, max, pow) {
+			if (min > max) {
+				var t = max;
+				max = min;
+				min = t;
+			}
+			var range = max - min;
+			return min + Math.pow(this.random(),pow) * range;
+		}
+		this.betweenPow = betweenPow;
+		
 		//math['seed' + rngname] = seedrandom;
 
 		//

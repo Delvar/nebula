@@ -4,7 +4,7 @@ define(
 	function (Layer) {
 	"use strict";
 
-	function LayerVignette(canvas,alpha,outerRadius,innerRadius) {
+	function LayerVignette(canvas, alpha, outerRadius, innerRadius) {
 		Layer.call(this, canvas);
 		this.alpha = alpha;
 		this.outerRadius = outerRadius;
