@@ -205,6 +205,9 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.densityArrayToCanvas = function () {
+		if (typeof this.canvasDensity === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDensity.width * this.canvasDensity.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var density = Math.floor(this.clamp(0, this.densityArray[j], 1) * 255);
@@ -221,6 +224,9 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.depthArrayToCanvas = function () {
+		if (typeof this.canvasDepth === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDepth.width * this.canvasDepth.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var depth = Math.floor(this.clamp(0, this.depthArray[j], 1) * 255);
@@ -236,6 +242,9 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.darkArrayToCanvas = function () {
+		if (typeof this.canvasDark === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDark.width * this.canvasDark.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var dark = Math.floor(this.clamp(0, this.darkArray[j], 1) * 255);
@@ -256,7 +265,7 @@ define(
 
 		var centeredX = x * 4 - 2;
 		var centeredY = y * 2 - 1;
-		return 1 + (Math.pow(depth, 2 + (10 * density)));
+		return (Math.pow(depth, 2 + (10 * density)));
 	}
 
 	// --------------------------------------------
@@ -297,6 +306,9 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.smoothDirectLightArrayToCanvas = function () {
+		if (typeof this.canvasDirectLight === "undefined")
+			return;
+
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDirectLight.width * this.canvasDirectLight.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var light = Math.floor(this.clamp(0, this.smoothDirectLightArray[j], 1) * 255);
@@ -316,9 +328,9 @@ define(
 		var imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
 
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			var cBrightness = this.clamp(0, this.smoothDirectLightArray[j], 1) * (1 - this.darkArray[j]) * this.settings.brightness;
+			var cBrightness = (1 - this.darkArray[j]) * this.settings.brightness;
 
-			var colour = Colour.hslaToRgba((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor)) % 1, this.settings.colour.s, this.densityArray[j] + (this.densityArray[j] * Math.sqrt(Math.max(0, this.smoothDirectLightArray[j] - 1)) / 2.5), this.densityArray[j]);
+			var colour = Colour.hslaToRgba((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor)) % 1, this.settings.colour.s, this.densityArray[j] + (this.densityArray[j] * Math.sqrt(Math.max(0, this.smoothDirectLightArray[j])) / 2.5), this.densityArray[j]);
 
 			imageDataUint8[i] = Math.floor(this.clamp(0, colour.r * cBrightness, 1) * 255);
 			imageDataUint8[i + 1] = Math.floor(this.clamp(0, colour.g * cBrightness, 1) * 255); ;
@@ -347,11 +359,11 @@ define(
 			if (this.darkArray[Math.floor(x * this.canvas.width) + (Math.floor((y * this.canvas.height)) * this.canvas.width)] > 0.5) {
 				continue;
 			}
-			
+
 			var hue = this.seedRandom.random();
 			var saturation = this.seedRandom.between(0.9, 1);
 			var lightness = this.seedRandom.between(0.8, 1);
-			var radius = this.seedRandom.betweenPow(0.5, 2,2);
+			var radius = this.seedRandom.betweenPow(0.5, 2, 2);
 			var grd = ctx.createRadialGradient(radius, radius, 0, radius, radius, radius);
 			grd.addColorStop(0, Colour.hslaText(hue, saturation, lightness, 1));
 			grd.addColorStop(1, Colour.hslaText(hue, saturation, lightness, 0));

@@ -92,7 +92,21 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		if (settings.vignette === undefined || settings.vignette === '') {
 			settings.vignette = true;
 		}
-		
+
+		if (typeof(queryVars['debug']) !== 'undefined') {
+			settings.debug = (queryVars['debug'] === 'true');
+		}
+		if (settings.debug === undefined || settings.debug === '') {
+			settings.debug = false;
+		}
+
+		if (typeof(queryVars['showLayers']) !== 'undefined') {
+			settings.showLayers = (queryVars['showLayers'] === 'true');
+		}
+		if (settings.showLayers === undefined || settings.showLayers === '') {
+			settings.showLayers = false;
+		}
+
 		settings.realWidth = Math.floor(settings.width / settings.pixleScale);
 		settings.realHeight = Math.floor(settings.height / settings.pixleScale);
 
@@ -191,10 +205,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		milkyWay.nScale = seedRandom.between(100, 200);
 		milkyWay.widthDevisor = seedRandom.between(1, 8);
 		milkyWay.gaussianMultiplier = seedRandom.between(0.05, 0.5);
-		milkyWay.gaussianMin = seedRandom.between(0, 0.6-milkyWay.gaussianMultiplier);
+		milkyWay.gaussianMin = seedRandom.between(0, 0.6 - milkyWay.gaussianMultiplier);
 		milkyWay.roughness = seedRandom.between(0.4, 1);
 		milkyWay.lacunarity = seedRandom.between(1.5, 3);
-		
+
 		milkyWay.octaves = seedRandom.between(5, 8);
 		milkyWay.offsetX = seedRandom.between(0, 50000);
 		milkyWay.offsetY = seedRandom.between(0, 50000);
@@ -203,7 +217,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		milkyWay.distortionScale = seedRandom.between(0.5, 5);
 		milkyWay.hueFactor = seedRandom.between(-1, 1);
 		milkyWay.dHuePwr = seedRandom.between(0, 1);
-		
+
 		milkyWay.normalize = false;
 		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 		milkyWay.rotation = seedRandom.between(0, Math.PI);
@@ -212,7 +226,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		settings.milkyWay = milkyWay;
 
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&vignette=' + settings.vignette + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&vignette=' + settings.vignette + '&debug=' + settings.debug + '&showLayers=' + settings.showLayers + '&seed=' + settings.seed;
 		console.log(settings);
 
 		settings.ratioWidthHeight = settings.width / settings.height;
@@ -252,6 +266,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	var container = document.getElementById('list');
 
+	if (!settings.showLayers) {
+		container.style.visibility = "hidden";
+		container.style.display = "none";
+	}
+
 	// --------------------------------------------
 
 	var tCanvas,
@@ -265,18 +284,19 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	// Milky Way
 	tSettings = settings.milkyWay;
-	var tw = Math.floor( Math.sqrt(Math.pow(settings.realWidth, 2) + Math.pow(settings.realHeight, 2)));
-	var th = Math.floor( tw / tSettings.widthDevisor );
+	var tw = Math.floor(Math.sqrt(Math.pow(settings.realWidth, 2) + Math.pow(settings.realHeight, 2)));
+	var th = Math.floor(tw / tSettings.widthDevisor);
 
-	tCanvasDensity = addCanvas(tSettings.name + '-density', container, tw, th);
-	tCanvasDepth = addCanvas(tSettings.name + '-depth', container, tw, th);
-	tCanvasDark = addCanvas(tSettings.name + '-dark', container, tw, th);
-	tCanvasDirectLight = addCanvas(tSettings.name + '-directLight', container, tw, th);
+	tCanvasDensity = settings.debug ? addCanvas(tSettings.name + '-density', container, tw, th) : undefined;
+	tCanvasDepth = settings.debug ? addCanvas(tSettings.name + '-depth', container, tw, th) : undefined;
+	tCanvasDark = settings.debug ? addCanvas(tSettings.name + '-dark', container, tw, th) : undefined;
+	tCanvasDirectLight = settings.debug ? addCanvas(tSettings.name + '-directLight', container, tw, th) : undefined;
+
 	tCanvas = addCanvas(tSettings.name, container, tw, th);
 	tLayer = new LayerMilkyWay(tCanvas, tCanvasDensity, tCanvasDirectLight, tCanvasDepth, tCanvasDark, tSettings);
 	tLayer.setTransform(1, 1, settings.realWidth / 2, settings.realHeight / 2, Math.floor(tw / 2), Math.floor(th / 2), tSettings.rotation);
 	layers.push(tLayer);
-	
+
 	tSettings = settings.pointStars;
 	tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
 	tLayer = new LayerPointStars(tCanvas, tSettings.seed, tSettings.density, tSettings.brightness);
@@ -292,10 +312,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	for (var i = 0; i < settings.nebulas.length; i++) {
 		//break;
 		tSettings = settings.nebulas[i];
-		tCanvasDensity = addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight);
-		tCanvasDepth = addCanvas(tSettings.name + '-depth', container, settings.realWidth, settings.realHeight);
-		tCanvasNormal = addCanvas(tSettings.name + '-normal', container, settings.realWidth, settings.realHeight);
-		tCanvasDirectLight = addCanvas(tSettings.name + '-directLight', container, settings.realWidth, settings.realHeight);
+		tCanvasDensity = settings.debug ? addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight) : undefined;
+		tCanvasDepth = settings.debug ? addCanvas(tSettings.name + '-depth', container, settings.realWidth, settings.realHeight) : undefined;
+		tCanvasNormal = settings.debug ? addCanvas(tSettings.name + '-normal', container, settings.realWidth, settings.realHeight) : undefined;
+		tCanvasDirectLight = settings.debug ? addCanvas(tSettings.name + '-directLight', container, settings.realWidth, settings.realHeight) : undefined;
 
 		tCanvas = addCanvas(tSettings.name, container, settings.realWidth, settings.realHeight);
 		tLayer = new LayerNebula(tCanvas, tCanvasNormal, tCanvasDensity, tCanvasDirectLight, tCanvasDepth, tSettings, settings.brightStars);
@@ -381,8 +401,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 				return;
 			}
 		}
-		var spinner = document.getElementById("spinner");
-		spinner.style.display = 'none';
+		var loading = document.getElementById("loading");
+		loading.style.display = 'none';
 		var t1 = performance.now();
 		console.log("Render took " + Math.floor(t1 - t0) + " milliseconds.");
 	}

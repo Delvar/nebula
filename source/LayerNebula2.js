@@ -169,6 +169,9 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.densityArrayToCanvas = function () {
+		if (typeof this.canvasDensity === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDensity.width * this.canvasDensity.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var density = Math.floor(this.clamp(0, this.densityArray[j], 1) * 255);
@@ -185,6 +188,9 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.depthArrayToCanvas = function () {
+		if (typeof this.canvasDepth === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDepth.width * this.canvasDepth.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var depth = Math.floor(this.clamp(0, this.depthArray[j], 1) * 255);
@@ -246,6 +252,9 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.normalArrayToCanvas = function () {
+		if (typeof this.canvasNormal === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasNormal.width * this.canvasNormal.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			imageDataUint8[i] = Math.floor(this.clamp(0, this.normalArray[j].x * 0.5 + 0.5, 1) * 255);
@@ -349,6 +358,9 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.smoothDirectLightArrayToCanvas = function () {
+		if (typeof this.canvasDirectLight === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDirectLight.width * this.canvasDirectLight.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var light = Math.floor(this.clamp(0, this.smoothDirectLightArray[j], 1) * 255);
