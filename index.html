@@ -8,99 +8,101 @@
 <head>
 	<meta charset="utf-8">
 	<meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
-	<title></title>
+	<title>Nebula Generate by Morgan Gilroy</title>
 	<meta content="" name="description">
 	<meta content="width=device-width" name="viewport">
-	<script data-main="source/nebula.js" src="source/libs/require.js">
-	</script>
+	<script data-main="source/nebula.js" src="source/libs/require.js"></script>
 	<style type="text/css">
-html, body {
-	margin: 0;
-	width: 100%;
-	height: 100%;
-	background-color: #000000;
-	font-size: 0px;
-}
+html,
 body {
-	/*overflow: hidden;*/
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    font-size: 0px;
 }
-canvas, div {}
 canvas {
-	background-color: #111111;
+    background-color: #111111;
 }
 #main {
-	line-height: 0;
+    line-height: 0;
 }
 #seed {
-	font-size: small;
-	position: fixed;
-	bottom: 0px;
-	right: 0px;
+    font-size: small;
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
 }
 #seed:hover {
-	background-color: #FFFFFF;
+    background-color: #FFFFFF;
 }
-
+.visible {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 2s linear;
+}
+.hidden {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 2s, opacity 2s linear;
+}
 .loading {
+    display: table;
     position: fixed;
-    z-index: 999;
-    height: 0em;
-    width: 0em;
-    overflow: visible;
-    margin: auto;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
 }
-
-div.spin {
-  margin: 50% auto 0;
-  width: 140px;
-  text-align: center;
+.loading .middle {
+    display: table-cell;
+    vertical-align: middle;
+    /* border: 5px solid lightblue; */
 }
-
+.loading .middle .inner {
+    margin-left: auto;
+    margin-right: auto;
+    width: 140px;
+    /* border: 5px solid lightgreen; */
+}
+.spin {
+    text-align: center;
+}
 .spin .ball {
-  width: 20px;
-  height: 20px;
-  background-color: #000;
-  border: 2px solid #FFF;
-  border-radius: 100%;
-  display: inline-block;
-  animation: ball-pop 2.2s infinite ease-in-out both;
-  opacity: 0.5;
+    width: 20px;
+    height: 20px;
+    background-color: #000;
+    border: 2px solid #FFF;
+    border-radius: 100%;
+    display: inline-block;
+    animation: ball-pop 2.2s infinite ease-in-out both;
+    opacity: 0.5;
 }
-
 .spin .ball-1 {
-  animation-delay: -0.4s;
+    animation-delay: -0.4s;
 }
-
 .spin .ball-2 {
-  animation-delay: -0.2s;
+    animation-delay: -0.2s;
 }
-
 .spin .ball-3 {
-  animation-delay: 0s;
+    animation-delay: 0s;
 }
-
 .spin .ball-4 {
-  animation-delay: +0.2s;
+    animation-delay: +0.2s;
 }
-
 .spin .ball-5 {
-  animation-delay: +0.4s;
+    animation-delay: +0.4s;
 }
-
 @keyframes ball-pop {
-  0%, 100% { 
-    transform: scale(0);
-	opacity: 0;
-  } 25% { 
-    transform: scale(1.0);
-	opacity: 1;
-  }
+    0%, 100% {
+        transform: scale(0.1);
+        opacity: 0;
+    }
+    25% {
+        transform: scale(1.0);
+        opacity: 1;
+    }
 }
-	</style>
+</style>
 	
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -114,16 +116,20 @@ div.spin {
 
 </head>
 <body>
-<div id="loading" class="loading">
-	<div class="spin">
-		<div class="ball ball-1"></div>
-		<div class="ball ball-2"></div>
-		<div class="ball ball-3"></div>
-		<div class="ball ball-4"></div>
-		<div class="ball ball-5"></div>
+	<div id="loading" class="loading visible">
+		<div class="middle">
+			<div class="inner">
+				<div class="spin">
+					<div class="ball ball-1"></div>
+					<div class="ball ball-2"></div>
+					<div class="ball ball-3"></div>
+					<div class="ball ball-4"></div>
+					<div class="ball ball-5"></div>
+				</div>
+			</div>
+		</div>
 	</div>
-</div>
-<!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+	<!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
 	<div id="main" role="main" style="">
 		<canvas id="output"></canvas>
 	</div>

@@ -402,7 +402,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			}
 		}
 		var loading = document.getElementById("loading");
-		loading.style.display = 'none';
+		loading.classList.remove("visible");
+		loading.classList.add("hidden");
+		
+		//loading.style.display = 'none';
 		var t1 = performance.now();
 		console.log("Render took " + Math.floor(t1 - t0) + " milliseconds.");
 	}
