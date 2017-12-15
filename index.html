@@ -32,12 +32,12 @@ canvas {
 .visible {
     visibility: visible;
     opacity: 1;
-    transition: opacity 2s linear;
+    transition: opacity 1s linear;
 }
 .hidden {
     visibility: hidden;
     opacity: 0;
-    transition: visibility 0s 2s, opacity 2s linear;
+    transition: visibility 0s 1s, opacity 1s linear;
 }
 .loading {
     display: table;
@@ -102,18 +102,7 @@ canvas {
     position: fixed;
     height: 100%;
     width: 100%;
-}
-
-#seedButton {
-    position: absolute;
-    width: 3em;
-    height: 3em;
-    background-image: url(images/coffee.svg);
-    background-size: 1.5em;
-    background-repeat: no-repeat;
-    background-position: center;
-    right: 0;
-    top: 0;
+	pointer-events: none;
 }
 
 #seedWrapper {
@@ -122,39 +111,51 @@ canvas {
     right: 0px;
 }
 
+#seedWrapper2 {
+    width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    transition: all 0.25s linear;
+    overflow: hidden;
+    float: right;
+    pointer-events: all;
+    opacity: 1;
+    background-color: #FFFFFF;
+    background-color: cornflowerblue;
+}
+
+#seedWrapper2:active, #seedWrapper2:hover, #seedWrapper2:focus {
+    background-color: #FFFFFF;
+    opacity: 1;
+    transition: all 0.25s linear;
+    width: 100%;
+    padding-right: 1.5em;
+}
+
 #seed {
-width: 3em;
+    line-height: 3em;
+    white-space: pre;
+    margin-right: 1em;
+    margin-left: 1em;
+}
+
+#seedButton {
+    width: 3em;
     height: 3em;
     background-image: url(images/coffee.svg);
     background-size: 1.5em;
     background-repeat: no-repeat;
+    background-position: center;
     background-color: cornflowerblue;
-    background-position: right 0.75em center;
+    position: absolute;
+    top: 0;
+    right: 0;
     border-radius: 1.5em;
-    transition: all 1s linear;
-    overflow: hidden;
-    float: right;
-    line-height: 3em;
-    color: rgba(0,0,0,0);
-    white-space: pre;
+	transition: all 0.25s linear;
 }
 
-#seed:active, #seed:hover, #seed:focus {
-    background-color: #FFFFFF;
-    opacity: 1;
-    transition: all 1s linear;
-    width: 100%;
-    padding-right: 1em;
-    padding-left: 1em;
-    color: unset;
-}
-
-.roundButton {
-	border-radius: 3em;
-	background-color: cornflowerblue;
-}
-.roundButton:hover {
-	background-color: #5179c1;
+#seedButton:hover {
+	background-color: #5178bf;
 }
 
 </style>
@@ -187,7 +188,10 @@ width: 3em;
 	
 	<div id="gui" class="visible">
 		<div id="seedWrapper">
-			<div id="seed"></div>
+			<div id="seedWrapper2">
+				<div id="seed"></div>
+				<div id="seedButton"></div>
+			</div>
 		</div>
 	</div>
 	

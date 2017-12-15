@@ -104,7 +104,7 @@ define(
 		//Draw random lines
 		var rounds = 1 + Math.floor(this.brightness * 3);
 		for (var i = 0; i < Math.PI * rounds; i = i + this.seedRandom.between(Math.PI / (4 + (40 * this.brightness)), Math.PI / (2 + (20 * this.brightness)))) {
-			var sT = this.seedRandom.between(0, 1);
+			var sT = this.seedRandom.random();
 			sT = Math.pow(sT, 3);
 			var length = (sT * 0.5) + (this.starRadius * 8);
 			var width = (1 - sT) * (this.starRadius * this.seedRandom.between(1, 4));

@@ -354,7 +354,7 @@ define(
 			var centeredX = x * 4 - 2;
 			//get a gaussian for the position between left @ -2 to right +2
 			var g = this.settings.gaussianMultiplier * gaussian(centeredX, 0.3989429999973527) + this.settings.gaussianMin;
-			var y = ((g * 2 * Math.pow(this.seedRandom.between(0.2, 1), 2) * this.seedRandom.between(-1, 1)) / 2) + 0.5;
+			var y = ((g * 2 * this.seedRandom.betweenPow(0.04, 1) * this.seedRandom.between(-1, 1)) / 2) + 0.5;
 
 			if (this.darkArray[Math.floor(x * this.canvas.width) + (Math.floor((y * this.canvas.height)) * this.canvas.width)] > 0.5) {
 				continue;
