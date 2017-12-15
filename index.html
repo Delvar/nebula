@@ -96,17 +96,42 @@ canvas {
     }
 }
 
+.button {
+	width: 3em;
+    height: 3em;
+	border-radius: 1.5em;
+	background-color: cornflowerblue;
+	pointer-events: all;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.button::after {
+    width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    content: "";
+    display: block;
+	box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out;
+}
+
+.button:hover::after {
+	opacity: 1;
+}
 
 #gui {
-    display: table;
     position: fixed;
-    height: 100%;
-    width: 100%;
-	pointer-events: none;
+    pointer-events: none;
+    margin: 2em;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
 }
 
 #seedWrapper {
-	position: fixed;
+	position: absolute;
     bottom: 0px;
     right: 0px;
 }
@@ -140,21 +165,36 @@ canvas {
 }
 
 #seedButton {
-    width: 3em;
-    height: 3em;
     background-image: url(images/coffee.svg);
     background-size: 1.5em;
     background-repeat: no-repeat;
     background-position: center;
-    background-color: cornflowerblue;
     position: absolute;
     top: 0;
     right: 0;
-    border-radius: 1.5em;
 	transition: all 0.25s linear;
 }
 
 #seedButton:hover {
+	background-color: #5178bf;
+}
+
+
+
+
+
+#downloadButton {
+    background-image: url(images/download.svg);
+    background-size: 2em;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    transition: all 0.25s linear;
+}
+
+#downloadButton:hover {
 	background-color: #5178bf;
 }
 
@@ -190,9 +230,10 @@ canvas {
 		<div id="seedWrapper">
 			<div id="seedWrapper2">
 				<div id="seed"></div>
-				<div id="seedButton"></div>
+				<div id="seedButton" class="button"></div>
 			</div>
 		</div>
+		<a href="#" id="downloadButton" download="nebula.png" class="button" crossOrigin="anonymous"></a>
 	</div>
 	
 	<!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
@@ -200,8 +241,6 @@ canvas {
 		<canvas id="output"></canvas>
 	</div>
 	<div id="list"></div>
-
-
 </body>
 
 </html>

@@ -270,6 +270,17 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		container.style.visibility = "hidden";
 		container.style.display = "none";
 	}
+	
+	// --------------------------------------------
+	
+	var downloadbutton = document.getElementById('downloadButton');
+	downloadbutton.download = settings.seed + ".png";
+	
+	if (typeof(downloadbutton) !== 'undefined') {
+		downloadbutton.addEventListener('click', function (e) {
+		downloadbutton.href = output.toDataURL();
+		},false);
+	}
 
 	// --------------------------------------------
 
