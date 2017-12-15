@@ -367,6 +367,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	// --------------------------------------------
 
+	/*
 	for (var i = 0; i < document.styleSheets.length; i++) {
 		var styleSheet = document.styleSheets[i];
 		for (var j = 0; j < styleSheet.rules.length; j++) {
@@ -377,7 +378,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			}
 		}
 	}
-
+*/
 	// --------------------------------------------
 
 	function compositLayersToOutput() {
