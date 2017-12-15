@@ -179,10 +179,6 @@ canvas {
 	background-color: #5178bf;
 }
 
-
-
-
-
 #downloadButton {
     background-image: url(images/download.svg);
     background-size: 2em;
@@ -198,6 +194,52 @@ canvas {
 	background-color: #5178bf;
 }
 
+#attributionWrapper {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#attributionWrapper2 {
+	width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    transition: all 0.25s linear;
+    overflow: hidden;
+    float: left;
+    pointer-events: all;
+    opacity: 1;
+    background-color: #FFFFFF;
+    background-color: cornflowerblue;
+}
+
+#attributionWrapper2:active, #attributionWrapper2:hover, #attributionWrapper2:focus {
+    background-color: #FFFFFF;
+    opacity: 1;
+    transition: all 0.25s linear;
+    width: 100%;
+    padding-left: 2.5em;
+}
+
+#attribution {
+    line-height: 3em;
+    margin-left: 1em;
+}
+
+#attributionButton {
+    background-image: url(images/attribution.svg);
+    background-size: 1.5em;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 0.25s linear;
+}
+
+#attributionButton:hover {
+	background-color: #5178bf;
+}
 </style>
 	
 <script>
@@ -234,6 +276,17 @@ canvas {
 			</div>
 		</div>
 		<a href="#" id="downloadButton" download="nebula.png" class="button" crossOrigin="anonymous"></a>
+		
+		<div id="attributionWrapper">
+			<div id="attributionWrapper2">
+				<div id="attribution">
+					<div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+				</div>
+				<div id="attributionButton" class="button"></div>
+			</div>
+		</div>
+		
+		
 	</div>
 	
 	<!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
