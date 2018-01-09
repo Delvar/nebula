@@ -264,6 +264,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	output.style.width = settings.width + 'px';
 	output.style.height = settings.height + 'px';
 
+	output.download = settings.seed + ".png";
+	
 	var container = document.getElementById('list');
 
 	if (!settings.showLayers) {
