@@ -79,6 +79,9 @@ define(
 	}
 
 	Layer.prototype.colourArrayToCanvas = function (colourArray, canvas) {
+		if (typeof canvas === "undefined")
+			return;
+		
 		var imageDataUint8 = new Uint8ClampedArray(canvas.width * canvas.height * 4);
 		this.colourArrayToImageDataUint8(colourArray, imageDataUint8);
 		var ctx = canvas.getContext("2d");

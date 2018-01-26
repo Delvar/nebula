@@ -4,12 +4,12 @@ define(
 		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
 	function (Layer, Colour, Noise, Vector3) {
 	"use strict";
-
-	function LayerNebula(canvas, canvasNormal, canvasHeight, canvasLight, settings, brightStars) {
+	
+	function LayerNebula(canvas, canvasNormal, canvasDensity, canvasDirectLight, canvasDepth, settings, brightStars) {
 		Layer.call(this, canvas);
 		this.canvasNormal = canvasNormal;
-		this.canvasHeight = canvasHeight;
-		this.canvasLight = canvasLight;
+		this.canvasDepth = canvasDepth;
+		this.canvasDirectLight = canvasDirectLight;
 		this.settings = settings;
 		this.brightStars = brightStars || [];
 		this.status = Layer.Status.ReadyForProcessing;
@@ -363,7 +363,7 @@ define(
 		this.generateNebulaData();
 
 		var heightColourArray = this.generateHeightColourArrayFromDataArray(this.data);
-		this.colourArrayToCanvas(heightColourArray, this.canvasHeight);
+		this.colourArrayToCanvas(heightColourArray, this.canvasDepth);
 		heightColourArray = undefined;
 
 		var normalColourArray = this.generateNormalColourArrayFromDataArray(this.data);
@@ -371,7 +371,7 @@ define(
 		normalColourArray = undefined;
 
 		var brightnessColourArray = this.generateBrightnessColourArrayFromDataArray(this.data);
-		this.colourArrayToCanvas(brightnessColourArray, this.canvasLight);
+		this.colourArrayToCanvas(brightnessColourArray, this.canvasDirectLight);
 		brightnessColourArray = undefined;
 
 		var nebulaColourArray = this.generateNebulaColourArrayFromDataArray(this.data);

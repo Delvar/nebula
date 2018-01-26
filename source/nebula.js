@@ -381,6 +381,9 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		}
 	}
 */
+	//add to window so we can access from console.
+	window.layers = layers;
+	
 	// --------------------------------------------
 
 	function compositLayersToOutput() {
@@ -402,10 +405,12 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		}
 
 	}
-
+	window.compositLayersToOutput = compositLayersToOutput;
+	
 	// --------------------------------------------
 
 	function processLayers() {
+		
 		for (var i = 0; i < layers.length; i++) {
 			if (layers[i].status == Layer.Status.ReadyForProcessing) {
 				//console.log(layers[i]);
@@ -415,6 +420,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 				return;
 			}
 		}
+		
 		var loading = document.getElementById("loading");
 		loading.classList.remove("visible");
 		loading.classList.add("hidden");
@@ -423,8 +429,22 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		var t1 = performance.now();
 		console.log("Render took " + Math.floor(t1 - t0) + " milliseconds.");
 	}
+	
 	var t0 = performance.now();
-
+	
+	
+	window.processLayers = function() {
+		var loading = document.getElementById("loading");
+		loading.classList.remove("hidden");
+		loading.classList.add("visible");
+		t0 = performance.now();
+		setTimeout(processLayers, 100);
+		return;
+	};
+	
+	
+	
+	
 	setTimeout(processLayers, 1);
 
 });
