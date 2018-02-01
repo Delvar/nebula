@@ -8,9 +8,9 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerVignette', 'LayerMilkyWay',
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerNebula3', 'LayerNebula4', 'LayerVignette', 'LayerMilkyWay',
 		'Random/SeedRandom'],
-	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerVignette, LayerMilkyWay) {
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerNebula3, LayerNebula4, LayerVignette, LayerMilkyWay) {
 
 	seedRandom = new Random.SeedRandom();
 
@@ -83,7 +83,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			settings.nebulaMode = parseInt(queryVars['nebulaMode']);
 		}
 		if (settings.nebulaMode === undefined || settings.nebulaMode === '') {
-			settings.nebulaMode = 2;
+			settings.nebulaMode = 4;
 		}
 
 		if (typeof(queryVars['vignette']) !== 'undefined') {
@@ -247,7 +247,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	if (settings.nebulaMode == 2) {
 		LayerNebula = LayerNebula2;
-	} else {
+	} else if (settings.nebulaMode == 3) {
+		LayerNebula = LayerNebula3;
+	} else if (settings.nebulaMode == 4) {
+		LayerNebula = LayerNebula4;
+	}else {
 		// do nothing!
 	}
 

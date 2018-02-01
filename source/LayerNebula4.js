@@ -1,5 +1,5 @@
 define(
-	'LayerNebula2',
+	'LayerNebula4',
 	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
 		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
 	function (Layer, Colour, Noise, Vector3, Random) {
@@ -52,11 +52,13 @@ define(
 
 	// --------------------------------------------
 
-	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale) {
+	//var r = [0, 0, 0];
+	
+	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale, r) {
 		var x = originalX / scale + offsetX;
 		var y = originalY / scale + offsetY;
 
-		var tweakFactor = (1 / 2.783090005787192) * 1.5; //tweak to get the output in a nice range.
+		var tweakFactor = 0.53896927403;//(1 / 2.783090005787192) * 1.5; //tweak to get the output in a nice range.
 
 		var lacunarity = this.settings.lacunarity;
 		var roughness = this.settings.roughness;
@@ -64,13 +66,15 @@ define(
 		var distortionScale = this.settings.distortionScale;
 		var alphaExponent = this.settings.alphaExponent;
 
-		var r = [0, 0, 0];
+		//var r = [0, 0, 0];
+		//r = [0, 0, 0];
+		//r[0] = r[1] = r[2] = 0;
 
 		var dist = getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2);
 		var dHue = dist.nx * dist.ny;
 		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist.x, dist.y) * tweakFactor;
 
-		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);//this.settings.powLacunarityRoughness;
+		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness); //this.settings.powLacunarityRoughness;
 		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 
@@ -80,7 +84,7 @@ define(
 		var increment;
 
 		if (value <= 0) {
-			return r;
+			return;// r;
 		}
 
 		for (var i = 1; i < this.settings.octaves; i++) {
@@ -114,7 +118,7 @@ define(
 		 */
 
 		r[2] = dHue;
-		return r;
+		return ;//r;
 	}
 
 	// --------------------------------------------
@@ -140,20 +144,24 @@ define(
 		var maxDensity = -99999;
 		var minDepth = 999999;
 		var maxDepth = -99999;
-
+	
 		this.settings.octaves = Math.floor(this.settings.octaves);
 
+		var Mathmin = Math.min;
+		var Mathmax = Math.max;
+		var d = [0,0,0];
+		
 		for (var y = 0, j = 0; y < h; y++) {
 			for (var x = 0; x < w; x++, j++) {
-				var d = this.getDataAt(x, y, s.offsetX, s.offsetY, s.scale);
+				this.getDataAt(x, y, s.offsetX, s.offsetY, s.scale, d);
 				this.densityArray[j] = d[0];
 				this.depthArray[j] = d[1];
 				this.dHueArray[j] = d[2];
 
-				minDensity = Math.min(minDensity, this.densityArray[j]);
-				maxDensity = Math.max(maxDensity, this.densityArray[j]);
-				minDepth = Math.min(minDepth, this.depthArray[j]);
-				maxDepth = Math.max(maxDepth, this.depthArray[j]);
+				minDensity = Mathmin(minDensity, d[0]);
+				maxDensity = Mathmax(maxDensity, d[0]);
+				minDepth = Mathmin(minDepth, d[1]);
+				maxDepth = Mathmax(maxDepth, d[1]);
 			}
 		}
 
@@ -171,10 +179,10 @@ define(
 	LayerNebula.prototype.densityArrayToCanvas = function () {
 		if (typeof this.canvasDensity === "undefined")
 			return;
-		
+
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDensity.width * this.canvasDensity.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			var density = Math.floor(this.clamp(0, this.densityArray[j], 1) * 255);
+			var density = this.densityArray[j] * 255;
 			imageDataUint8[i] = density;
 			imageDataUint8[i + 1] = density;
 			imageDataUint8[i + 2] = density;
@@ -190,10 +198,10 @@ define(
 	LayerNebula.prototype.depthArrayToCanvas = function () {
 		if (typeof this.canvasDepth === "undefined")
 			return;
-		
+
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDepth.width * this.canvasDepth.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			var depth = Math.floor(this.clamp(0, this.depthArray[j], 1) * 255);
+			var depth = this.depthArray[j] * 255;
 			imageDataUint8[i] = depth;
 			imageDataUint8[i + 1] = depth;
 			imageDataUint8[i + 2] = depth;
@@ -203,12 +211,15 @@ define(
 		ctx.putImageData(new ImageData(imageDataUint8, this.canvasDepth.width, this.canvasDepth.height), 0, 0);
 		imageDataUint8 = undefined;
 	};
-	
+
 	// --------------------------------------------
 
 	LayerNebula.prototype.generateNormalMap = function () {
 		var w = this.canvas.width - 1;
 		var h = this.canvas.height - 1;
+		var Mathpow = Math.pow;
+		var Mathsign = Math.sign;
+
 		for (var y = 0, j = 0; y <= h; y++) {
 			var ndy = (y < h) ? +1 + w : 0;
 			var pdy = (y > 0) ? -1 - w : 0;
@@ -238,12 +249,12 @@ define(
 				//==============
 				// from https://squircleart.github.io/shading/normal-map-generation.html
 
-				var nx = Math.pow(Math.pow(dx, -2) + 1, -0.5) * Math.sign(dx);
-				var ny = Math.pow(Math.pow(dy, -2) + 1, -0.5) * Math.sign(dy);
-				//var nz = (1 / this.maxDepth) * Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
-				var nz = 0.5 * Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
+				var nx = Mathpow(Mathpow(dx, -2) + 1, -0.5) * Mathsign(dx);
+				var ny = Mathpow(Mathpow(dy, -2) + 1, -0.5) * Mathsign(dy);
+				var nz = 0.5 * Mathpow(1 - (nx * nx) + (ny * ny), 0.5);
 
 				this.normalArray[j] = (new Vector3(nx, ny, nz)).normalizeOverwrite();
+				//this.normalArray[j] = (Vector3.create(nx, ny, nz)).normalizeOverwrite();
 				//==============
 			}
 		}
@@ -254,12 +265,12 @@ define(
 	LayerNebula.prototype.normalArrayToCanvas = function () {
 		if (typeof this.canvasNormal === "undefined")
 			return;
-		
+
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasNormal.width * this.canvasNormal.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			imageDataUint8[i] = Math.floor(this.clamp(0, this.normalArray[j].x * 0.5 + 0.5, 1) * 255);
-			imageDataUint8[i + 1] = Math.floor(this.clamp(0, this.normalArray[j].y * 0.5 + 0.5, 1) * 255);
-			imageDataUint8[i + 2] = Math.floor(this.clamp(0, this.normalArray[j].z * 0.5 + 0.5, 1) * 255);
+			imageDataUint8[i] = (this.normalArray[j].x * 0.5 + 0.5) * 255;
+			imageDataUint8[i + 1] = (this.normalArray[j].y * 0.5 + 0.5) * 255;
+			imageDataUint8[i + 2] = (this.normalArray[j].z * 0.5 + 0.5) * 255;
 			imageDataUint8[i + 3] = 255;
 		}
 		var ctx = this.canvasNormal.getContext("2d");
@@ -280,7 +291,7 @@ define(
 
 	// --------------------------------------------
 
-		LayerNebula.prototype.getDirectLightAt = function (x, y, j) {
+	LayerNebula.prototype.getDirectLightAt = function (x, y, j) {
 		var directLight = 0;
 
 		var depth = this.depthArray[j];
@@ -293,7 +304,7 @@ define(
 
 		for (var i = 0; i < this.brightStars.length; i++) {
 			var l = this.brightStars[i];
-			
+
 			/*
 			var rx = x * this.canvas.width;
 			var ry = y * this.canvas.height;
@@ -310,14 +321,13 @@ define(
 			continue;
 			}
 			 */
-			 
+
 			v.x = l.x - x;
 			v.y = (l.y - y) * aspect;
 			v.z = l.tz - depth;
 
 			var sqMag = v.squareMagnitude();
 			var mag = Math.sqrt(sqMag);
-
 
 			if (mag > 0) {
 				v.x = v.x / mag;
@@ -330,7 +340,7 @@ define(
 			}
 
 			sqMag = sqMag * 250;
-						
+
 			dotProduct = normal.dotProduct(v);
 			dotProduct = Math.pow(dotProduct, 5) * Math.sign(dotProduct);
 			directLight += (l.brightness / sqMag) * dotProduct
@@ -387,10 +397,10 @@ define(
 	LayerNebula.prototype.smoothDirectLightArrayToCanvas = function () {
 		if (typeof this.canvasDirectLight === "undefined")
 			return;
-		
+
 		var imageDataUint8 = new Uint8ClampedArray(this.canvasDirectLight.width * this.canvasDirectLight.height * 4);
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			var light = Math.floor(this.clamp(0, this.smoothDirectLightArray[j], 1) * 255);
+			var light = this.smoothDirectLightArray[j] * 255;
 			imageDataUint8[i] = light;
 			imageDataUint8[i + 1] = light;
 			imageDataUint8[i + 2] = light;
@@ -410,10 +420,10 @@ define(
 			var cBrightness = this.clamp(0, this.smoothDirectLightArray[j], 1);
 			var colour = Colour.hslaToRgba((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor)) % 1, this.settings.colour.s, this.densityArray[j] + (this.densityArray[j] * Math.sqrt(Math.max(0, this.smoothDirectLightArray[j] - 1)) / 2.5), this.densityArray[j]);
 
-			imageDataUint8[i] = Math.floor(this.clamp(0, colour.r * cBrightness, 1) * 255);
-			imageDataUint8[i + 1] = Math.floor(this.clamp(0, colour.g * cBrightness, 1) * 255); ;
-			imageDataUint8[i + 2] = Math.floor(this.clamp(0, colour.b * cBrightness, 1) * 255); ;
-			imageDataUint8[i + 3] = Math.floor(this.densityArray[j] * 255);
+			imageDataUint8[i] = colour.r * cBrightness * 255;
+			imageDataUint8[i + 1] = colour.g * cBrightness * 255;
+			imageDataUint8[i + 2] = colour.b * cBrightness * 255;
+			imageDataUint8[i + 3] = this.densityArray[j] * 255;
 		}
 		var ctx = this.canvas.getContext("2d");
 		ctx.putImageData(new ImageData(imageDataUint8, this.canvas.width, this.canvas.height), 0, 0);

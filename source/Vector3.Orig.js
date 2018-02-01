@@ -13,19 +13,20 @@ define(
 	Vector3.count = 0;
 
 	Vector3.prototype.squareMagnitude = function () {
-		return this.x * this.x + this.y * this.y + this.z * this.z;
+		//return this.x * this.x + this.y * this.y + this.z * this.z;
+		return Vector3.squareMagnitude(this.x, this.y, this.z);
 	};
 
 	Vector3.prototype.magnitude = function () {
-		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
+		return Vector3.magnitude(this.x, this.y, this.z);
 	};
 
 	Vector3.prototype.normalize = function () {
 		var magnitude = this.magnitude();
 		if (magnitude == 0) {
-			return Vector3.create(0, 0, 0);
+			return new Vector3(0, 0, 0);
 		}
-		return Vector3.create(this.x / magnitude, this.y / magnitude, this.z / magnitude);
+		return new Vector3(this.x / magnitude, this.y / magnitude, this.z / magnitude);
 	};
 
 	Vector3.prototype.normalizeOverwrite = function () {
@@ -40,14 +41,14 @@ define(
 	};
 
 	Vector3.prototype.clone = function () {
-		return Vector3.create(this.x, this.y, this.z);
+		return new Vector3(this.x, this.y, this.z);
 	};
 
 	Vector3.prototype.dotProduct = function (other) {
-		return (this.x * other.x + this.y * other.y + this.z * other.z);
+		//return (this.x * other.x + this.y * other.y + this.z * other.z );
+		return Vector3.dotProduct(this.x, this.y, this.z, other.x, other.y, other.z);
 	};
 
-	// - Static Methods
 	Vector3.squareMagnitude = function (x, y, z) {
 		return x * x + y * y + z * z;
 	};
@@ -67,7 +68,6 @@ define(
 	Vector3.dotProduct = function (x1, y1, z1, x2, y2, z2) {
 		return (x1 * x2 + y1 * y2 + z1 * z2);
 	};
-	// - Static Methods
 
 	// - Object Pool Testing
 	Vector3.prototype.setObjectPool = function (pool, index) {
@@ -79,15 +79,12 @@ define(
 		return this.poolIndex;
 	};
 
-	Vector3.prototype.destroy = function () {
-		Vector3.ObjectPool.destroy(this);
-	};
-
-	Vector3.ObjectPool = new ObjectPool(100, 50, Vector3);
+	Vector3.ObjectPool = new ObjectPool(50000, 10000, Vector3);
 
 	Vector3.create = function () {
 		return Vector3.ObjectPool.create.apply(Vector3.ObjectPool, arguments);
 	}
+
 	// - Object Pool Testing
 
 	window.Vector3 = Vector3;
