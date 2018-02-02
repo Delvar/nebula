@@ -33,32 +33,25 @@ define(
 	// -- 2d Noise, Runs far faster!
 	// --------------------------------------------
 
-	function getDistortion2d(x, y, distortionFactor, distortionScale, noisefunc) {
-		var r = {};
-		r.nx = noisefunc((x + 13.5) * distortionScale, (y + 13.5) * distortionScale);
-		r.ny = noisefunc(x * distortionScale, y * distortionScale);
-		r.dx = r.nx * distortionFactor,
-		r.dy = r.ny * distortionFactor,
-		r.x = x + r.dx;
-		r.y = y + r.dy;
-		return r;
-	}
-
-	function fakeVoronoi(x, y) {
-		var x = Noise.perlin2(x, y);
-		x = x * x;
-		return x;
+	function getDistortion2d(x, y, distortionFactor, distortionScale, noisefunc, r) {
+		r[0] = noisefunc((x + 13.5) * distortionScale, (y + 13.5) * distortionScale);
+		r[1] = noisefunc(x * distortionScale, y * distortionScale);
+		r[2] = r[0] * distortionFactor,
+		r[3] = r[1] * distortionFactor,
+		r[4] = x + r[2];
+		r[5] = y + r[3];
 	}
 
 	// --------------------------------------------
 
-	//var r = [0, 0, 0];
-	
-	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale, r) {
+	var rt = [0, 0, 0];
+	var distt = [0, 0, 0, 0, 0, 0];
+
+	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale) {
 		var x = originalX / scale + offsetX;
 		var y = originalY / scale + offsetY;
 
-		var tweakFactor = 0.53896927403;//(1 / 2.783090005787192) * 1.5; //tweak to get the output in a nice range.
+		var tweakFactor = 0.5389692740374481; //(1 / 2.783090005787192) * 1.5; //tweak to get the output in a nice range.
 
 		var lacunarity = this.settings.lacunarity;
 		var roughness = this.settings.roughness;
@@ -66,15 +59,14 @@ define(
 		var distortionScale = this.settings.distortionScale;
 		var alphaExponent = this.settings.alphaExponent;
 
-		//var r = [0, 0, 0];
-		//r = [0, 0, 0];
-		//r[0] = r[1] = r[2] = 0;
+		var r = rt; // = [0, 0, 0];
+		var dist = distt; //[0, 0, 0, 0, 0, 0];
 
-		var dist = getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2);
-		var dHue = dist.nx * dist.ny;
-		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist.x, dist.y) * tweakFactor;
+		getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2, dist);
+		var dHue = dist[0] * dist[1];
+		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * tweakFactor;
 
-		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness); //this.settings.powLacunarityRoughness;
+		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
 		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 
@@ -84,15 +76,14 @@ define(
 		var increment;
 
 		if (value <= 0) {
-			return;// r;
+			return r;
 		}
 
 		for (var i = 1; i < this.settings.octaves; i++) {
-			dist = getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2);
-			increment = (Noise.Blender.TwoD.FastVoronoi_F1(dist.x, dist.y) * pwr * value);
-			//increment = (fakeVoronoi(dist.x, dist.y) * pwr * value);
+			getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2, dist);
+			increment = (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * value);
 
-			dHue += (dist.nx * dist.ny * dHuePwr);
+			dHue += (dist[0] * dist[1] * dHuePwr);
 			value += increment;
 
 			dHuePwr *= pwHL;
@@ -103,22 +94,8 @@ define(
 
 		r[0] = Math.pow(value, alphaExponent);
 		r[1] = value * 0.5;
-
-		/* // Make depth domes...
-		var numberOfDomes = 1;
-		var p = this.canvas.width / numberOfDomes / 2;
-		var ox = (originalX - p) * numberOfDomes / (this.canvas.width / 2);
-		var oy = (originalY - p) * numberOfDomes / (this.canvas.width / 2);
-		var tx = 1 - Math.abs(ox % 2 - 1);
-		var ty = 1 - Math.abs(oy % 2 - 1);
-		var over = 1.25;
-		var d = Math.sqrt(tx * tx + ty * ty) * over;
-		var d = this.clamp(0, d, 1) * Math.PI / 2;
-		r[1] = Math.cos(d) / (numberOfDomes * over);
-		 */
-
 		r[2] = dHue;
-		return ;//r;
+		return r;
 	}
 
 	// --------------------------------------------
@@ -144,29 +121,29 @@ define(
 		var maxDensity = -99999;
 		var minDepth = 999999;
 		var maxDepth = -99999;
-	
+
 		this.settings.octaves = Math.floor(this.settings.octaves);
 
-		var Mathmin = Math.min;
-		var Mathmax = Math.max;
-		var d = [0,0,0];
-		
 		for (var y = 0, j = 0; y < h; y++) {
 			for (var x = 0; x < w; x++, j++) {
-				this.getDataAt(x, y, s.offsetX, s.offsetY, s.scale, d);
+				var d = this.getDataAt(x, y, s.offsetX, s.offsetY, s.scale);
 				this.densityArray[j] = d[0];
 				this.depthArray[j] = d[1];
 				this.dHueArray[j] = d[2];
 
-				minDensity = Mathmin(minDensity, d[0]);
-				maxDensity = Mathmax(maxDensity, d[0]);
-				minDepth = Mathmin(minDepth, d[1]);
-				maxDepth = Mathmax(maxDepth, d[1]);
+				if (this.densityArray[j] < minDensity)
+					minDensity = this.densityArray[j];
+				if (this.densityArray[j] > maxDensity)
+					maxDensity = this.densityArray[j];
+				if (this.depthArray[j] < minDepth)
+					minDepth = this.depthArray[j];
+				if (this.depthArray[j] > maxDepth)
+					maxDepth = this.depthArray[j];
 			}
 		}
 
-		console.log('normalize: ' + ((maxDensity - minDensity) < 0.5) + ' || ' + (minDensity > 0.5) + ' || ' + (maxDensity > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
-		console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDepth', maxDepth, 'minDepth', minDepth);
+		//console.log('normalize: ' + ((maxDensity - minDensity) < 0.5) + ' || ' + (minDensity > 0.5) + ' || ' + (maxDensity > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
+		//console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDepth', maxDepth, 'minDepth', minDepth);
 
 		if (((maxDensity - minDensity) < 0.5) || (minDensity > 0.5) || (maxDensity > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
 			s.normalize = true;
@@ -176,21 +153,22 @@ define(
 
 	// --------------------------------------------
 
+	var imageDataUint8;
+	
 	LayerNebula.prototype.densityArrayToCanvas = function () {
 		if (typeof this.canvasDensity === "undefined")
 			return;
 
-		var imageDataUint8 = new Uint8ClampedArray(this.canvasDensity.width * this.canvasDensity.height * 4);
-		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
+		var id = imageDataUint8;
+		for (var i = 0, j = 0, l = id.length; i < l; i += 4, j++) {
 			var density = this.densityArray[j] * 255;
-			imageDataUint8[i] = density;
-			imageDataUint8[i + 1] = density;
-			imageDataUint8[i + 2] = density;
-			imageDataUint8[i + 3] = 255;
+			id[i] = density;
+			id[i + 1] = density;
+			id[i + 2] = density;
+			id[i + 3] = 255;
 		}
 		var ctx = this.canvasDensity.getContext("2d");
-		ctx.putImageData(new ImageData(imageDataUint8, this.canvasDensity.width, this.canvasDensity.height), 0, 0);
-		imageDataUint8 = undefined;
+		ctx.putImageData(new ImageData(id, this.canvasDensity.width, this.canvasDensity.height), 0, 0);
 	};
 
 	// --------------------------------------------
@@ -199,17 +177,16 @@ define(
 		if (typeof this.canvasDepth === "undefined")
 			return;
 
-		var imageDataUint8 = new Uint8ClampedArray(this.canvasDepth.width * this.canvasDepth.height * 4);
-		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
+		var id = imageDataUint8;
+		for (var i = 0, j = 0, l = id.length; i < l; i += 4, j++) {
 			var depth = this.depthArray[j] * 255;
-			imageDataUint8[i] = depth;
-			imageDataUint8[i + 1] = depth;
-			imageDataUint8[i + 2] = depth;
-			imageDataUint8[i + 3] = 255;
+			id[i] = depth;
+			id[i + 1] = depth;
+			id[i + 2] = depth;
+			id[i + 3] = 255;
 		}
 		var ctx = this.canvasDepth.getContext("2d");
-		ctx.putImageData(new ImageData(imageDataUint8, this.canvasDepth.width, this.canvasDepth.height), 0, 0);
-		imageDataUint8 = undefined;
+		ctx.putImageData(new ImageData(id, this.canvasDepth.width, this.canvasDepth.height), 0, 0);
 	};
 
 	// --------------------------------------------
@@ -217,9 +194,6 @@ define(
 	LayerNebula.prototype.generateNormalMap = function () {
 		var w = this.canvas.width - 1;
 		var h = this.canvas.height - 1;
-		var Mathpow = Math.pow;
-		var Mathsign = Math.sign;
-
 		for (var y = 0, j = 0; y <= h; y++) {
 			var ndy = (y < h) ? +1 + w : 0;
 			var pdy = (y > 0) ? -1 - w : 0;
@@ -249,12 +223,11 @@ define(
 				//==============
 				// from https://squircleart.github.io/shading/normal-map-generation.html
 
-				var nx = Mathpow(Mathpow(dx, -2) + 1, -0.5) * Mathsign(dx);
-				var ny = Mathpow(Mathpow(dy, -2) + 1, -0.5) * Mathsign(dy);
-				var nz = 0.5 * Mathpow(1 - (nx * nx) + (ny * ny), 0.5);
+				var nx = Math.pow(Math.pow(dx, -2) + 1, -0.5) * Math.sign(dx);
+				var ny = Math.pow(Math.pow(dy, -2) + 1, -0.5) * Math.sign(dy);
+				var nz = 0.5 * Math.pow(1 - (nx * nx) + (ny * ny), 0.5);
 
 				this.normalArray[j] = (new Vector3(nx, ny, nz)).normalizeOverwrite();
-				//this.normalArray[j] = (Vector3.create(nx, ny, nz)).normalizeOverwrite();
 				//==============
 			}
 		}
@@ -266,20 +239,19 @@ define(
 		if (typeof this.canvasNormal === "undefined")
 			return;
 
-		var imageDataUint8 = new Uint8ClampedArray(this.canvasNormal.width * this.canvasNormal.height * 4);
-		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
-			imageDataUint8[i] = (this.normalArray[j].x * 0.5 + 0.5) * 255;
-			imageDataUint8[i + 1] = (this.normalArray[j].y * 0.5 + 0.5) * 255;
-			imageDataUint8[i + 2] = (this.normalArray[j].z * 0.5 + 0.5) * 255;
-			imageDataUint8[i + 3] = 255;
+		var id = imageDataUint8;
+		for (var i = 0, j = 0, l = id.length; i < l; i += 4, j++) {
+			id[i] = (this.normalArray[j].x * 0.5 + 0.5) * 255;
+			id[i + 1] = (this.normalArray[j].y * 0.5 + 0.5) * 255;
+			id[i + 2] = (this.normalArray[j].z * 0.5 + 0.5) * 255;
+			id[i + 3] = 255;
 		}
 		var ctx = this.canvasNormal.getContext("2d");
-		ctx.putImageData(new ImageData(imageDataUint8, this.canvasNormal.width, this.canvasNormal.height), 0, 0);
-		imageDataUint8 = undefined;
+		ctx.putImageData(new ImageData(id, this.canvasNormal.width, this.canvasNormal.height), 0, 0);
 	};
 
 	// --------------------------------------------
-	// bit of a hack to ensure bright stars do not appear totaly behind the nebula
+	// bit of a hack to ensure bright stars do not appear totally behind the nebula
 	LayerNebula.prototype.pushBrightStarsForward = function () {
 		var w = this.canvas.width;
 		for (var i = 0; i < this.brightStars.length; i++) {
@@ -305,23 +277,6 @@ define(
 		for (var i = 0; i < this.brightStars.length; i++) {
 			var l = this.brightStars[i];
 
-			/*
-			var rx = x * this.canvas.width;
-			var ry = y * this.canvas.height;
-
-			var lrx = l.x * this.canvas.width;
-			var lry = l.y * this.canvas.height;
-
-			var tDist = Math.sqrt((rx - lrx) * (rx - lrx) + (ry - lry) * (ry - lry));
-			if (tDist < 10 && tDist > 8) {
-			directLight = 2;
-			continue;
-			} else if (tDist <= 8) {
-			directLight = (rx + ry) % 2;
-			continue;
-			}
-			 */
-
 			v.x = l.x - x;
 			v.y = (l.y - y) * aspect;
 			v.z = l.tz - depth;
@@ -342,9 +297,7 @@ define(
 			sqMag = sqMag * 250;
 
 			dotProduct = normal.dotProduct(v);
-			dotProduct = Math.pow(dotProduct, 5) * Math.sign(dotProduct);
 			directLight += (l.brightness / sqMag) * dotProduct
-
 		}
 		v.x = 0.5 - x;
 		v.y = (0.5 - y) * aspect;
@@ -352,7 +305,7 @@ define(
 		dotProduct = normal.dotProduct(v.normalizeOverwrite());
 
 		v.destroy();
-		return directLight + (Math.pow(Math.max(dotProduct, 0), 2 + (10 * density)) * this.settings.ambiant);
+		return directLight + (Math.max(dotProduct, 0) * this.settings.ambiant);
 	}
 
 	// --------------------------------------------
@@ -398,44 +351,46 @@ define(
 		if (typeof this.canvasDirectLight === "undefined")
 			return;
 
-		var imageDataUint8 = new Uint8ClampedArray(this.canvasDirectLight.width * this.canvasDirectLight.height * 4);
+		//var imageDataUint8 = new Uint8ClampedArray(this.canvasDirectLight.width * this.canvasDirectLight.height * 4);
+		var id = imageDataUint8;
 		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
 			var light = this.smoothDirectLightArray[j] * 255;
-			imageDataUint8[i] = light;
-			imageDataUint8[i + 1] = light;
-			imageDataUint8[i + 2] = light;
-			imageDataUint8[i + 3] = 255;
+			id[i] = light;
+			id[i + 1] = light;
+			id[i + 2] = light;
+			id[i + 3] = 255;
 		}
 		var ctx = this.canvasDirectLight.getContext("2d");
-		ctx.putImageData(new ImageData(imageDataUint8, this.canvasDirectLight.width, this.canvasDirectLight.height), 0, 0);
-		imageDataUint8 = undefined;
+		ctx.putImageData(new ImageData(id, this.canvasDirectLight.width, this.canvasDirectLight.height), 0, 0);
+		//imageDataUint8 = undefined;
 	};
 
 	// --------------------------------------------
 
 	LayerNebula.prototype.nebulaToCanvas = function () {
-		var imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
-
-		for (var i = 0, j = 0, l = imageDataUint8.length; i < l; i += 4, j++) {
+		//var imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
+		var id = imageDataUint8;
+		for (var i = 0, j = 0, l = id.length; i < l; i += 4, j++) {
 			var cBrightness = this.clamp(0, this.smoothDirectLightArray[j], 1);
 			var colour = Colour.hslaToRgba((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor)) % 1, this.settings.colour.s, this.densityArray[j] + (this.densityArray[j] * Math.sqrt(Math.max(0, this.smoothDirectLightArray[j] - 1)) / 2.5), this.densityArray[j]);
 
-			imageDataUint8[i] = colour.r * cBrightness * 255;
-			imageDataUint8[i + 1] = colour.g * cBrightness * 255;
-			imageDataUint8[i + 2] = colour.b * cBrightness * 255;
-			imageDataUint8[i + 3] = this.densityArray[j] * 255;
+			id[i] = colour.r * cBrightness * 255;
+			id[i + 1] = colour.g * cBrightness * 255;
+			id[i + 2] = colour.b * cBrightness * 255;
+			id[i + 3] = this.densityArray[j] * 255;
 		}
 		var ctx = this.canvas.getContext("2d");
-		ctx.putImageData(new ImageData(imageDataUint8, this.canvas.width, this.canvas.height), 0, 0);
-		imageDataUint8 = undefined;
+		ctx.putImageData(new ImageData(id, this.canvas.width, this.canvas.height), 0, 0);
+		//imageDataUint8 = undefined;
 	};
 
 	// --------------------------------------------
 
 	LayerNebula.prototype.startProcessing = function () {
 		this.status = Layer.Status.Processing;
-		var ctx = this.canvas.getContext("2d");
 
+		imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
+		
 		this.generateNebulaData();
 		this.densityArrayToCanvas();
 
@@ -454,6 +409,8 @@ define(
 		this.settings.layer = this;
 
 		this.status = Layer.Status.Success;
+		
+		imageDataUint8 = undefined;
 	}
 
 	return LayerNebula;
