@@ -5,13 +5,16 @@ define(
 	"use strict";
 	function ObjectPool(size, sizeSteps, objType) {
 
-		if (typeof objType.prototype.getObjectPoolIndex !== 'function') {
-			throw ('require getObjectPoolIndex function on pooled class');
+		if (typeof objType.prototype._poolGetObjectPoolIndex !== 'function') {
+			throw ('require _poolGetObjectPoolIndex function on pooled class');
 		}
-		if (typeof objType.prototype.setObjectPool !== 'function') {
-			throw ('require setObjectPool function on pooled class');
+		if (typeof objType.prototype._poolSetObjectPool !== 'function') {
+			throw ('require _poolSetObjectPool function on pooled class');
 		}
-
+		if (typeof objType.prototype._poolInit !== 'function') {
+			throw ('require _poolInit function on pooled class');
+		}
+		
 		if (size <= 0 || !isFinite(size)) {
 			throw ('size <= 0');
 		}
@@ -25,7 +28,6 @@ define(
 		this.objType = objType;
 		this.position = 0;
 		this.pool = [];
-		//this.pools = [[]];
 		this.expandPool(size);
 
 		this.createCount = 0;
@@ -56,14 +58,16 @@ define(
 				obj = new this.objType();
 			}
 		}
+		
 		if (!obj) {
 			obj = this.pool[this.position++];
 			this.createPoolCount++;
 		}
 
 		//re-initialise the object.
-		obj.constructor.apply(obj, arguments);
-
+		//obj.constructor.apply(obj, arguments);
+		obj._poolInit.apply(obj, arguments);
+		
 		if (this.position > this.positionTide) {
 			this.positionTide = this.position;
 		}
@@ -106,7 +110,7 @@ define(
 		for (var i = this.size; i < newSize; i++) {
 			var obj = new this.objType();
 			//setObjectPoolIndex(obj, this, i);
-			obj.setObjectPool(this, i);
+			obj._poolSetObjectPool(this, i);
 
 			this.pool[i] = obj;
 		}
@@ -122,10 +126,10 @@ define(
 		}
 
 		//var objIndex = getObjectPoolIndex(obj);
-		var objIndex = obj.getObjectPoolIndex();
+		var objIndex = obj._poolGetObjectPoolIndex();
 
 		if (objIndex < 0) {
-			if (destroyNoIndexCount < 100) {
+			if (this.destroyNoIndexCount < 10) {
 				console.debug("Object not found in pool: ", obj);
 			}
 			this.destroyNoIndexCount++;
@@ -137,15 +141,15 @@ define(
 
 		//the one at the top is moved down to where the old obj was, the indexes are swapped.
 		var topObj = this.pool[this.position];
-		//var topObjIndex = getObjectPoolIndex(topObj); //could use this.position;
+		//var topObjIndex = _poolGetObjectPoolIndex(topObj); //could use this.position;
 		var topObjIndex = this.position;
 
 		this.pool[topObjIndex] = obj;
 		//setObjectPoolIndex(obj, this, topObjIndex);
-		obj.setObjectPool(this, topObjIndex);
+		obj._poolSetObjectPool(this, topObjIndex);
 		this.pool[objIndex] = topObj;
 		//setObjectPoolIndex(topObj, this, objIndex);
-		topObj.setObjectPool(this, objIndex);
+		topObj._poolSetObjectPool(this, objIndex);
 	}
 
 	ObjectPool.prototype.getStats = function () {

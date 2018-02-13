@@ -7,10 +7,19 @@ define(
 		this.x = x || 0;
 		this.y = y || 0;
 		this.z = z || 0;
-		Vector3.count++;
+		Object.seal(this);
+		/*
+		// - Object Pool Testing
+		this.pool = undefined;
+		this.poolIndex = -1;
+		Object.seal(this);
+		//Object.preventExtensions(this);
+		// - Object Pool Testing
+		*/
+		//Vector3.count++;
 	}
 
-	Vector3.count = 0;
+	//Vector3.count = 0;
 
 	Vector3.prototype.squareMagnitude = function () {
 		return this.x * this.x + this.y * this.y + this.z * this.z;
@@ -70,12 +79,13 @@ define(
 	// - Static Methods
 
 	// - Object Pool Testing
-	Vector3.prototype.setObjectPool = function (pool, index) {
+	/*
+	Vector3.prototype._poolSetObjectPool = function (pool, index) {
 		this.pool = pool;
 		this.poolIndex = index;
 	};
 
-	Vector3.prototype.getObjectPoolIndex = function () {
+	Vector3.prototype._poolGetObjectPoolIndex = function () {
 		return this.poolIndex;
 	};
 
@@ -83,14 +93,20 @@ define(
 		Vector3.ObjectPool.destroy(this);
 	};
 
+	Vector3.prototype._poolInit = function (x, y, z) {
+		this.x = x || 0;
+		this.y = y || 0;
+		this.z = z || 0;
+	}
+	
 	Vector3.ObjectPool = new ObjectPool(100, 50, Vector3);
 
 	Vector3.create = function () {
 		return Vector3.ObjectPool.create.apply(Vector3.ObjectPool, arguments);
-	}
+	}*/
 	// - Object Pool Testing
 
-	window.Vector3 = Vector3;
+	//window.Vector3 = Vector3;
 	return Vector3;
 
 });

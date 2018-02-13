@@ -20,6 +20,7 @@ define(
 		this.status = Layer.Status.Processing;
 		var ctx = this.canvas.getContext("2d");
 		var count = Math.round(this.canvas.width * this.canvas.height * this.density * 0.005);
+		ctx.save();
 		for (var i = 0; i < count; i++) {
 			var hue = this.seedRandom.random();
 			var saturation = this.seedRandom.between(0.9, 1);

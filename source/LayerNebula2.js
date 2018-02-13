@@ -1,7 +1,7 @@
 define(
 	'LayerNebula2',
 	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
+		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni', 'Random/SeedRandom'],
 	function (Layer, Colour, Noise, Vector3, Random) {
 	"use strict";
 
@@ -64,7 +64,7 @@ define(
 		var distortionScale = this.settings.distortionScale;
 		var alphaExponent = this.settings.alphaExponent;
 
-		var r = [0, 0, 0];
+		var r = [0.0, 0.0, 0.0];
 
 		var dist = getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2);
 		var dHue = dist.nx * dist.ny;
@@ -279,7 +279,8 @@ define(
 	}
 
 	// --------------------------------------------
-
+		var tempVector3 = new Vector3();
+		
 		LayerNebula.prototype.getDirectLightAt = function (x, y, j) {
 		var directLight = 0;
 
@@ -287,7 +288,7 @@ define(
 		var normal = this.normalArray[j];
 		var density = this.densityArray[j];
 
-		var v = Vector3.create();
+		var v = tempVector3;//new Vector3();
 		var aspect = this.canvas.height / this.canvas.width;
 		var dotProduct = 0;
 
@@ -318,7 +319,6 @@ define(
 			var sqMag = v.squareMagnitude();
 			var mag = Math.sqrt(sqMag);
 
-
 			if (mag > 0) {
 				v.x = v.x / mag;
 				v.y = v.y / mag;
@@ -341,7 +341,7 @@ define(
 		v.z = 10;
 		dotProduct = normal.dotProduct(v.normalizeOverwrite());
 
-		v.destroy();
+		//v.destroy();
 		return directLight + (Math.pow(Math.max(dotProduct, 0), 2 + (10 * density)) * this.settings.ambiant);
 	}
 

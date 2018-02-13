@@ -1,7 +1,7 @@
 define(
 	'LayerNebula4',
 	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
+		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni', 'Random/SeedRandom'],
 	function (Layer, Colour, Noise, Vector3, Random) {
 	"use strict";
 
@@ -44,14 +44,12 @@ define(
 
 	// --------------------------------------------
 
-	var rt = [0, 0, 0];
-	var distt = [0, 0, 0, 0, 0, 0];
+	var tempReturn = [0.0, 0.0, 0.0];
+	var tempDistortioneData = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 
 	LayerNebula.prototype.getDataAt = function (originalX, originalY, offsetX, offsetY, scale) {
 		var x = originalX / scale + offsetX;
 		var y = originalY / scale + offsetY;
-
-		var tweakFactor = 0.5389692740374481; //(1 / 2.783090005787192) * 1.5; //tweak to get the output in a nice range.
 
 		var lacunarity = this.settings.lacunarity;
 		var roughness = this.settings.roughness;
@@ -59,13 +57,20 @@ define(
 		var distortionScale = this.settings.distortionScale;
 		var alphaExponent = this.settings.alphaExponent;
 
-		var r = rt; // = [0, 0, 0];
-		var dist = distt; //[0, 0, 0, 0, 0, 0];
+		var r = tempReturn;
+		var dist = tempDistortioneData;
 
 		getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2, dist);
 		var dHue = dist[0] * dist[1];
-		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * tweakFactor;
+		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]);
 
+		//if (value <= 0) {
+//			r[0] = 0;
+	//		r[1] = 0;
+		//	r[2] = 0;
+			//return r;
+		//}
+		
 		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
 		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
@@ -73,26 +78,19 @@ define(
 		x *= lacunarity;
 		y *= lacunarity;
 
-		var increment;
-
-		if (value <= 0) {
-			return r;
-		}
+		//var increment;
 
 		for (var i = 1; i < this.settings.octaves; i++) {
 			getDistortion2d(x, y, distortionFactor, distortionScale, Noise.perlin2, dist);
-			increment = (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * value);
-
 			dHue += (dist[0] * dist[1] * dHuePwr);
-			value += increment;
-
+			value += Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * value;
 			dHuePwr *= pwHL;
 			pwr *= pwHL;
 			x *= lacunarity;
 			y *= lacunarity;
 		}
 
-		r[0] = Math.pow(value, alphaExponent);
+		r[0] = Math.pow(value,alphaExponent);
 		r[1] = value * 0.5;
 		r[2] = dHue;
 		return r;
@@ -143,12 +141,12 @@ define(
 		}
 
 		//console.log('normalize: ' + ((maxDensity - minDensity) < 0.5) + ' || ' + (minDensity > 0.5) + ' || ' + (maxDensity > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
-		//console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDepth', maxDepth, 'minDepth', minDepth);
+		console.log('maxDensity: ', maxDensity, 'minDensity:', minDensity, 'maxDepth:', maxDepth, 'minDepth:', minDepth);
 
-		if (((maxDensity - minDensity) < 0.5) || (minDensity > 0.5) || (maxDensity > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
-			s.normalize = true;
-			this.normalizeData(minDensity, maxDensity, minDepth, maxDepth);
-		}
+		//if (((maxDensity - minDensity) < 0.5) || (minDensity > 0.5) || (maxDensity > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
+		//	s.normalize = true;
+		this.normalizeData(minDensity, maxDensity, minDepth, maxDepth);
+		//}
 	}
 
 	// --------------------------------------------
@@ -262,17 +260,18 @@ define(
 	}
 
 	// --------------------------------------------
-
+	var tempVector3 = new Vector3();
+	
 	LayerNebula.prototype.getDirectLightAt = function (x, y, j) {
-		var directLight = 0;
+		var directLight = 0.0;
 
 		var depth = this.depthArray[j];
 		var normal = this.normalArray[j];
 		var density = this.densityArray[j];
 
-		var v = Vector3.create();
+		var v = tempVector3;//Vector3.create();
 		var aspect = this.canvas.height / this.canvas.width;
-		var dotProduct = 0;
+		var dotProduct;
 
 		for (var i = 0; i < this.brightStars.length; i++) {
 			var l = this.brightStars[i];
@@ -284,28 +283,30 @@ define(
 			var sqMag = v.squareMagnitude();
 			var mag = Math.sqrt(sqMag);
 
-			if (mag > 0) {
+			if (mag > 0.0) {
 				v.x = v.x / mag;
 				v.y = v.y / mag;
 				v.z = v.z / mag;
 			} else {
-				v.x = 0;
-				v.y = 0;
-				v.z = 0;
+				v.x = 0.0;
+				v.y = 0.0;
+				v.z = 0.0;
 			}
 
-			sqMag = sqMag * 250;
+			sqMag = sqMag * 250.0;
 
 			dotProduct = normal.dotProduct(v);
+			dotProduct = Math.pow(dotProduct, 5) * Math.sign(dotProduct);
 			directLight += (l.brightness / sqMag) * dotProduct
 		}
 		v.x = 0.5 - x;
 		v.y = (0.5 - y) * aspect;
-		v.z = 10;
+		v.z = 10.0;
 		dotProduct = normal.dotProduct(v.normalizeOverwrite());
 
-		v.destroy();
-		return directLight + (Math.max(dotProduct, 0) * this.settings.ambiant);
+		//v.destroy();
+		//return directLight + (Math.pow(Math.max(dotProduct, 0), 2 + (10 * density)) * this.settings.ambiant);
+		return directLight + (Math.max(dotProduct, 0.0) * this.settings.ambiant);
 	}
 
 	// --------------------------------------------

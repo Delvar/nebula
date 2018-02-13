@@ -1,7 +1,7 @@
 define(
 	'LayerNebula3',
 	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
+		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni', 'Random/SeedRandom'],
 	function (Layer, Colour, Noise, Vector3, Random) {
 	"use strict";
 

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+	<title>Test for Normal/Gaussian distribution</title>
+	<meta content="" name="description">
+	<meta content="width=device-width" name="viewport">
+	<script>
+	window.onerror = function(msg, url, linenumber) {
+		alert('Error: '+msg);
+		return false;
+	}
+	</script>
+</head>
+<body onload="draw_normal()">
+<script>
+'use strict'
+// clipped from https://github.com/errcw/gaussian/blob/master/lib/gaussian.js
+// clipped from http://blog.yjl.im/2010/09/simulating-normal-random-variable-using.html
+
+
+function Gaussian(mean, variance, range) {
+		if (variance <= 0) {
+			throw new Error('Variance must be > 0 (but was ' + variance + ')');
+		}
+
+		this.mean = mean;
+		this.variance = variance;
+		this.standardDeviation = Math.sqrt(variance);
+		
+		this.range = range || 1;
+	
+		if (this.range <= 0) {
+			throw new Error('Range must be > 0 (but was ' + this.range + ')');
+		}
+		
+		//scale so that maximum at mean is 1 then multiple by range later.
+		this.scale = this.standardDeviation * Math.sqrt(2 * Math.PI);
+	}
+
+	Gaussian.prototype.pdf = function (x) {
+		var m = this.standardDeviation * Math.sqrt(2 * Math.PI);
+		var e = Math.exp(-Math.pow(x - this.mean, 2) / (2 * this.variance));
+		return e / m * this.scale * this.range;
+	};
+
+	Gaussian.prototype.random = function () {
+		var V1,
+		V2,
+		S,
+		X;
+		do {
+			V1 = 2 * Math.random() - 1;
+			V2 = 2 * Math.random() - 1;
+			S = V1 * V1 + V2 * V2;
+		} while (S > 1);
+
+		X = Math.sqrt(-2 * Math.log(S) / S) * V1;
+		X = this.mean + this.standardDeviation * X;
+		return X;
+	}
+
+
+function draw_normal() {
+	var mean = Number(document.getElementById('mean').value);
+	var variance = Number(document.getElementById('variance').value);
+	var range = Number(document.getElementById('range').value);
+	
+	var g = new Gaussian(mean, variance, range);
+
+	var canvas = document.getElementById('canvas');
+	var context = canvas.getContext('2d');
+	context.clearRect(0, 0, canvas.width, canvas.height);
+
+	var rangeFrom = Number(document.getElementById('rangeFrom').value);
+	var rangeTo = Number(document.getElementById('rangeTo').value);
+	
+	//don't be silly.
+	if (rangeFrom > rangeTo) {
+		return;	
+	}
+	
+	var range = Math.abs(rangeFrom - rangeTo);
+	var pixleRange = range / canvas.width;
+
+	var pdfArray = new Array(canvas.width);
+	var totalPdf = 0.0;
+
+	var maxPdf = 0.0;
+	//var scale =  Math.sqrt(2 * Math.PI);
+	
+	// get the height of the pdf line.
+	for (var i = 0; i < canvas.width; i++) {
+		var x = rangeFrom + (i * pixleRange);
+		var pdf = g.pdf(x);// * scale;
+		pdfArray[i] = pdf;
+		totalPdf += pdf;
+		if (pdf > maxPdf)
+			maxPdf = pdf;
+	}
+	totalPdf = totalPdf;
+
+	var normalCount = Math.floor(totalPdf * canvas.height);
+	var normalCountArray = new Array(canvas.width);
+
+	for (var i = 0; i < normalCountArray.length; i++) {
+		normalCountArray[i] = 0;
+	}
+
+	var sum = 0.0;
+	var sum2 = 0.0;
+	var maxNormalCount = 0.0;
+	var itterationCount = 0;
+	
+	for (var i = 0; i < normalCount; i++) {
+		var nr = g.random();
+		sum += nr;
+		sum2 += nr * nr;
+		itterationCount ++;
+		
+		//its out of range so get another sample.
+		if (nr < rangeFrom || nr > rangeTo) {
+			i--;
+			continue;
+		}
+		var idx = Math.floor(((nr - rangeFrom) / range) * (normalCountArray.length - 1));
+		normalCountArray[idx]++;
+		if (normalCountArray[idx] > maxNormalCount)
+			maxNormalCount = normalCountArray[idx];
+	}
+
+	var calculatedMean = sum / itterationCount;
+	var calculatedVariance = sum2 / itterationCount - calculatedMean * calculatedMean;
+	
+	var c1 = '#F8AEAE';
+	var c2 = '#5A995A';
+	var c3 = '#5555CA';
+	var c4 = '#CA5555';
+	
+	//draw the normal count array
+	context.strokeStyle = c1;
+	for (var i = 0; i < normalCountArray.length; i++) {
+		var y = canvas.height - normalCountArray[i];
+		context.beginPath();
+		context.moveTo(i, canvas.height);
+		context.lineTo(i, y);
+		context.closePath();
+		context.stroke();
+	}
+
+	// draw pdfArray
+	context.beginPath();
+	context.strokeStyle = c3;
+	context.moveTo(0, (1-pdfArray[0]) * canvas.height);
+	for (var i = 1; i < pdfArray.length; i++) {
+		var y= (1-pdfArray[i]) * canvas.height;
+		context.lineTo(i, y);
+	}
+	context.stroke();
+
+	var meanX = Math.floor( ((calculatedMean - rangeFrom) / range) * canvas.width );
+	
+	if (meanX > 0 && meanX < canvas.width) {
+		context.beginPath();
+		context.strokeStyle = c4;
+		context.moveTo(meanX, 0);
+		context.lineTo(meanX, canvas.height);
+		context.stroke();
+	}
+	
+	context.fillStyle = c2;
+	context.font = '12pt monospace';
+	context.textAlign = 'left';
+	context.textBaseline = 'bottom';
+	/*
+	context.fillText(rangeFrom.toString(), 0, canvas.height);
+	context.textAlign = 'right';
+	context.fillText(rangeTo.toString(), canvas.width, canvas.height);
+	*/
+	
+	for (var i = rangeFrom; i <= rangeTo; i++) {
+		if (i < mean) {
+			context.textAlign = 'left';
+		} else if(i > mean) {
+			context.textAlign = 'right';
+		} else {
+			context.textAlign = 'center';
+		}
+		context.fillText(i.toString(), Math.floor( ((i - rangeFrom) / range) * canvas.width ), canvas.height);
+	}
+	
+	meanX = Math.floor( ((mean - rangeFrom) / range) * canvas.width );
+	
+	if (meanX > 0 && meanX < canvas.width) {
+		context.textAlign = 'center';
+		context.fillText(mean.toString(),meanX, canvas.height);
+	}
+	
+	context.textBaseline = 'top';
+	context.textAlign = 'right';
+	context.fillStyle = c1;
+	context.fillText('mean: ' + calculatedMean.toPrecision(3), canvas.width, 30);
+	context.fillText('variance: ' + calculatedVariance.toPrecision(3), canvas.width, 45);
+	context.fillText('max: ' + (maxNormalCount/canvas.height).toPrecision(3), canvas.width, 60);
+		
+	context.textBaseline = 'top';
+	context.textAlign = 'left';
+	context.fillStyle = c3;
+	context.fillText('scale: ' + g.scale.toPrecision(3), 0, 0);
+	context.fillText('range: ' + g.range.toPrecision(3), 0, 15);
+	context.fillText('mean: ' + mean.toPrecision(3), 0, 30);
+	context.fillText('variance: ' + variance.toPrecision(3), 0, 45);
+	context.fillText('max: ' + maxPdf.toPrecision(3), 0, 60);
+}
+</script>
+	<div>
+		<div>
+			<canvas id="canvas" width="619" height="240"></canvas>
+		</div>
+		<div>
+			Mean: <input type="text" size="3" value="0" id="mean">
+			Variance: <input type="text" size="3" value="1" id="variance">
+			Range From: <input type="text" size="3" value="-4" id="rangeFrom">
+			Range To: <input type="text" size="3" value="4" id="rangeTo"><br/>
+			Range: <input type="text" size="3" value="1" id="range">
+			<input type="button" value="Draw probability density of simulation" onclick="draw_normal()"><br>
+			(HTML5 canvas support required)
+		</div>
+	</div>
+</body>
+
+</html>

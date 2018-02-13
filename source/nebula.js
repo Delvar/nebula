@@ -61,29 +61,29 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		if (typeof(queryVars['pixleScale']) !== 'undefined') {
 			settings.pixleScale = parseInt(queryVars['pixleScale']);
 		}
-		if (settings.pixleScale === undefined || settings.pixleScale === '') {
+		if (settings.pixleScale === undefined || settings.pixleScale === '' || isNaN(settings.pixleScale)) {
 			settings.pixleScale = 1;
 		}
 
 		if (typeof(queryVars['width']) !== 'undefined') {
 			settings.width = parseInt(queryVars['width']);
 		}
-		if (settings.width === undefined || settings.width === '') {
+		if (settings.width === undefined || settings.width === '' || isNaN(settings.width)) {
 			settings.width = window.innerWidth;
 		}
 
 		if (typeof(queryVars['height']) !== 'undefined') {
 			settings.height = parseInt(queryVars['height']);
 		}
-		if (settings.height === undefined || settings.height === '') {
+		if (settings.height === undefined || settings.height === '' || isNaN(settings.height)) {
 			settings.height = window.innerHeight;
 		}
 
 		if (typeof(queryVars['nebulaMode']) !== 'undefined') {
 			settings.nebulaMode = parseInt(queryVars['nebulaMode']);
 		}
-		if (settings.nebulaMode === undefined || settings.nebulaMode === '') {
-			settings.nebulaMode = 4;
+		if (settings.nebulaMode === undefined || settings.nebulaMode === '' || isNaN(settings.nebulaMode)) {
+			settings.nebulaMode = 3;
 		}
 
 		if (typeof(queryVars['vignette']) !== 'undefined') {
@@ -175,7 +175,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 			seedRandom.setSeed(tNebula.seed);
 
 			tNebula.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth * 2);
-			tNebula.roughness = seedRandom.between(0.4, 1);
+			tNebula.roughness = 1;
+			seedRandom.between(0.4, 1);
 			tNebula.lacunarity = seedRandom.between(2, 4);
 			tNebula.octaves = seedRandom.between(5, 8);
 			tNebula.offsetX = seedRandom.between(0, 50000);
@@ -201,37 +202,35 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		seedRandom.setSeed(milkyWay.seed);
 
-		milkyWay.scale = seedRandom.between(settings.realWidth, settings.realWidth);
-		milkyWay.nScale = seedRandom.between(100, 200);
-		milkyWay.widthDevisor = seedRandom.between(1, 8);
-		milkyWay.gaussianMultiplier = seedRandom.between(0.05, 0.5);
-		milkyWay.gaussianMin = seedRandom.between(0, 0.6 - milkyWay.gaussianMultiplier);
-		milkyWay.roughness = seedRandom.between(0.4, 1);
+		milkyWay.scale = seedRandom.between(settings.realWidth / 4, settings.realWidth / 10);
+		milkyWay.nScale = seedRandom.between(milkyWay.scale * 0.25, milkyWay.scale * 1.25);
+		milkyWay.widthDevisor = seedRandom.between(2, 8);
+
+		milkyWay.gaussianVariance = 0.02 + seedRandom.betweenPow(0, 1, 4);
+		milkyWay.gaussianRange = seedRandom.between(1, 1);
+
+		milkyWay.roughness = 1;
 		milkyWay.lacunarity = seedRandom.between(1.5, 3);
 
-		milkyWay.octaves = seedRandom.between(5, 8);
+		milkyWay.octaves = seedRandom.between(7, 9);
 		milkyWay.offsetX = seedRandom.between(0, 50000);
 		milkyWay.offsetY = seedRandom.between(0, 50000);
-		milkyWay.alphaExponent = seedRandom.between(1, 5);
-		milkyWay.distortionFactor = seedRandom.between(0.5, 2);
-		milkyWay.distortionScale = seedRandom.between(0.5, 5);
-		milkyWay.hueFactor = seedRandom.between(-1, 1);
-		milkyWay.dHuePwr = seedRandom.between(0, 1);
+		milkyWay.distortionFactor = seedRandom.between(1, 2);
+		milkyWay.distortionScale = seedRandom.between(1, 3);
+		milkyWay.hueFactor = seedRandom.between(-0.5, 0.5);
+		milkyWay.dHuePwr = seedRandom.between(1, 1.5);
 
-		milkyWay.normalize = false;
 		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 		milkyWay.rotation = seedRandom.between(0, Math.PI);
-		milkyWay.brightness = seedRandom.between(0.05, 0.7);
+		milkyWay.brightness = seedRandom.between(0.01, 0.5);
 
 		settings.milkyWay = milkyWay;
 
 		seedOutput = document.getElementById("seed");
 		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&vignette=' + settings.vignette + '&debug=' + settings.debug + '&showLayers=' + settings.showLayers + '&seed=' + settings.seed;
-		console.log(settings);
+		//console.log(settings);
 
 		settings.ratioWidthHeight = settings.width / settings.height;
-
-		console.log(settings.ratioWidthHeight);
 	}
 
 	// --------------------------------------------
@@ -251,11 +250,11 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		LayerNebula = LayerNebula3;
 	} else if (settings.nebulaMode == 4) {
 		LayerNebula = LayerNebula4;
-	}else {
+	} else {
 		// do nothing!
 	}
 
-	console.log(JSON.stringify(settings));
+	//console.log(JSON.stringify(settings));
 	var layers = new Array();
 
 	// --------------------------------------------
@@ -269,23 +268,23 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	output.style.height = settings.height + 'px';
 
 	output.download = settings.seed + ".png";
-	
+
 	var container = document.getElementById('list');
 
 	if (!settings.showLayers) {
 		container.style.visibility = "hidden";
 		container.style.display = "none";
 	}
-	
+
 	// --------------------------------------------
-	
+
 	var downloadbutton = document.getElementById('downloadButton');
 	downloadbutton.download = settings.seed + ".png";
-	
+
 	if (typeof(downloadbutton) !== 'undefined') {
 		downloadbutton.addEventListener('click', function (e) {
-		downloadbutton.href = output.toDataURL();
-		},false);
+			downloadbutton.href = output.toDataURL();
+		}, false);
 	}
 
 	// --------------------------------------------
@@ -305,12 +304,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	var th = Math.floor(tw / tSettings.widthDevisor);
 
 	tCanvasDensity = settings.debug ? addCanvas(tSettings.name + '-density', container, tw, th) : undefined;
-	tCanvasDepth = settings.debug ? addCanvas(tSettings.name + '-depth', container, tw, th) : undefined;
 	tCanvasDark = settings.debug ? addCanvas(tSettings.name + '-dark', container, tw, th) : undefined;
-	tCanvasDirectLight = settings.debug ? addCanvas(tSettings.name + '-directLight', container, tw, th) : undefined;
 
 	tCanvas = addCanvas(tSettings.name, container, tw, th);
-	tLayer = new LayerMilkyWay(tCanvas, tCanvasDensity, tCanvasDirectLight, tCanvasDepth, tCanvasDark, tSettings);
+	tLayer = new LayerMilkyWay(tCanvas, tCanvasDensity, tCanvasDark, tSettings);
 	tLayer.setTransform(1, 1, settings.realWidth / 2, settings.realHeight / 2, Math.floor(tw / 2), Math.floor(th / 2), tSettings.rotation);
 	layers.push(tLayer);
 
@@ -327,7 +324,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 	layers.push(tLayer);
 
 	for (var i = 0; i < settings.nebulas.length; i++) {
-		//break;
 		tSettings = settings.nebulas[i];
 		tCanvasDensity = settings.debug ? addCanvas(tSettings.name + '-density', container, settings.realWidth, settings.realHeight) : undefined;
 		tCanvasDepth = settings.debug ? addCanvas(tSettings.name + '-depth', container, settings.realWidth, settings.realHeight) : undefined;
@@ -373,21 +369,9 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	// --------------------------------------------
 
-	/*
-	for (var i = 0; i < document.styleSheets.length; i++) {
-		var styleSheet = document.styleSheets[i];
-		for (var j = 0; j < styleSheet.rules.length; j++) {
-			var cssStyleRule = styleSheet.rules[j];
-			if (cssStyleRule.selectorText == '#list canvas') {
-				cssStyleRule.style['max-width'] = Math.floor(window.innerWidth / container.childElementCount) + 'px';
-				break;
-			}
-		}
-	}
-*/
 	//add to window so we can access from console.
 	window.layers = layers;
-	
+
 	// --------------------------------------------
 
 	function compositLayersToOutput() {
@@ -410,34 +394,57 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 	}
 	window.compositLayersToOutput = compositLayersToOutput;
-	
+
 	// --------------------------------------------
 
 	function processLayers() {
-		
+
 		for (var i = 0; i < layers.length; i++) {
 			if (layers[i].status == Layer.Status.ReadyForProcessing) {
-				//console.log(layers[i]);
 				layers[i].startProcessing();
 				compositLayersToOutput();
 				setTimeout(processLayers, 1);
 				return;
 			}
 		}
-		
+
 		var loading = document.getElementById("loading");
 		loading.classList.remove("visible");
 		loading.classList.add("hidden");
-		
-		//loading.style.display = 'none';
+
+		//adds names to the canvases for debugging
+		var c = container.children;
+		for (var i = 0; i < c.length; i++) {
+			//skip the bright stars as they are quite small and cant read the name anyway
+			if (c[i].id.startsWith("brightStar")) {
+				continue;
+			}
+			var ctx = c[i].getContext("2d");
+			ctx.save();
+			ctx.font = '12pt monospace';
+			ctx.textAlign = 'left';
+			ctx.textBaseline = 'top';
+
+			ctx.strokeStyle = 'black';
+			ctx.lineWidth = 3;
+			ctx.lineJoin = "round";
+			ctx.miterLimit = 3;
+
+			ctx.strokeText(c[i].id, 10, 10);
+
+			ctx.fillStyle = 'white';
+			ctx.fillText(c[i].id, 10, 10);
+
+			ctx.restore();
+		}
+
 		var t1 = performance.now();
 		console.log("Render took " + Math.floor(t1 - t0) + " milliseconds.");
 	}
-	
+
 	var t0 = performance.now();
-	
-	
-	window.processLayers = function() {
+
+	window.processLayers = function () {
 		var loading = document.getElementById("loading");
 		loading.classList.remove("hidden");
 		loading.classList.add("visible");
@@ -445,10 +452,6 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		setTimeout(processLayers, 100);
 		return;
 	};
-	
-	
-	
-	
-	setTimeout(processLayers, 1);
 
+	setTimeout(processLayers, 1);
 });
