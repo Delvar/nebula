@@ -388,6 +388,7 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.startProcessing = function () {
+		this.setProcessingStartTime();
 		this.status = Layer.Status.Processing;
 
 		imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
@@ -412,6 +413,7 @@ define(
 		this.status = Layer.Status.Success;
 		
 		imageDataUint8 = undefined;
+		this.setProcessingEndTime();
 	}
 
 	return LayerNebula;

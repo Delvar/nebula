@@ -20,7 +20,12 @@ define(
 
 		var seedRandom = new Random.SeedRandom(settings.seed);
 		this.seedRandom = seedRandom;
-		this.gaussian = new Random.Gaussian(0, this.settings.gaussianVariance, this.settings.gaussianRange, function(){return seedRandom.random()} );
+		this.gaussian = new Random.Gaussian(0, this.settings.gaussianVariance, this.settings.gaussianRange, function () {
+				return seedRandom.random()
+			});
+
+		this.pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
+		//this.settings.nScale = 100;
 	}
 
 	LayerMilkyWay.prototype = Object.create(Layer.prototype);
@@ -48,14 +53,16 @@ define(
 		var centeredX = originalX * 2 - 1;
 		var centeredY = originalY * 2 - 1;
 
-		var g = this.gaussian.pdf(centeredX)*0.9;
+		var pdf = this.gaussian.pdf(centeredX);
+		var g = pdf * 0.8;
 
 		var x = (originalX * this.canvas.width) / scale + offsetX;
 		var y = (originalY * this.canvas.height) / scale + offsetY;
 
+		//nScale = nScale*2;
 		var nx = (originalX * this.canvas.width) / nScale + offsetX;
 		var ny = (originalY * this.canvas.height) / nScale + offsetY;
-		
+
 		var r = tempReturn; // = [0, 0, 0];
 		var dist = tempDistortioneData; //[0, 0, 0, 0, 0, 0];
 
@@ -63,48 +70,54 @@ define(
 		var abs_y = Math.abs(centeredY);
 		var dist_g_edge = 1 - g;
 		var dist_g_y = abs_y - g;
-		var glow = 1-(dist_g_y / dist_g_edge);
+		var glow;
+		var crossPoint = 0.5;
 
-		//var density = Math.pow(Math.abs(glow),4);
+		if (abs_y >= g) {
+			glow = (1 - (dist_g_y / dist_g_edge)) * crossPoint; ;
+		} else {
+			glow = ((1 - Math.pow(abs_y / g,3)) * (1 - crossPoint) * pdf) + crossPoint;
+		}
+
 		var density = glow;
-				
-		var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx*0.5,ny*0.5) + Noise.Blender.TwoD.FastVoronoi_F1(nx,ny);
-		darkDensity = this.clamp(0,1-Math.pow(darkDensity,2),1);
+		//var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.5, ny * 0.5) + Noise.Blender.TwoD.FastVoronoi_F1(nx, ny);
+		var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx, ny) * Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.5, ny * 0.5);
+		darkDensity = this.clamp(0, 1 - Math.pow(darkDensity*10, 2), 1);
 
-		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
-		var pwr = pwHL;
+		var pwHL = this.pwHL;
+		var pwr = pwHL ;//* pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 
 		for (var i = 1; i < this.settings.octaves; i++) {
 			getDistortion2d(x, y, this.settings.distortionFactor, this.settings.distortionScale, Noise.perlin2, dist);
 			dHue += (dist[0] * dist[1] * dHuePwr);
-			//density += (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * density);
-			darkDensity += Noise.perlin2(dist[4], dist[5]) * pwr;
+
+			darkDensity += Noise.perlin2(dist[4], dist[5]) * pwr * darkDensity;
+			
 			dHuePwr *= pwHL;
 			pwr *= pwHL;
+			density += (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * density);
+						
 			x *= this.settings.lacunarity;
 			y *= this.settings.lacunarity;
 		}
-		//r[0] = this.clamp(0, Math.pow(density,4),1);
-		//r[0] = Math.pow(density,4);
 		r[0] = density;
 		r[1] = dHue;
-		r[2] = Math.pow(this.clamp(0, (Math.abs(darkDensity) * 1.5) - 0.25, 1), 5);
+		r[2] = Math.pow(this.clamp(0, (Math.abs(darkDensity * 1.1)) - 0.25, 1), 5);
 		//r[2] = Math.abs(darkDensity);
-
 		return r;
 	}
 
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.normalizeData = function (minDensity, maxDensity, maxDark, minDark) {
-		var ratioDensity = 4.0 / (maxDensity - minDensity);
-		//var ratioDark = 1.0 / (maxDark - minDark);
+		var ratioDensity = 1.0 / (maxDensity - minDensity);
+		var ratioDark = 1.0 / (maxDark - minDark);
 		var l = this.canvas.width * this.canvas.height;
 
 		for (var i = 0; i < l; i++) {
 			this.densityArray[i] = ((this.densityArray[i] - minDensity) * ratioDensity);
-			//this.darkArray[i] = ((this.darkArray[i] - minDark) * ratioDark);
+			this.darkArray[i] = ((this.darkArray[i] - minDark) * ratioDark);
 		}
 	}
 
@@ -138,7 +151,7 @@ define(
 		}
 
 		console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDark', maxDark, 'minDark', minDark);
-		this.normalizeData(minDensity, maxDensity, maxDark, minDark);
+		//this.normalizeData(minDensity, maxDensity, maxDark, minDark);
 	}
 	// --------------------------------------------
 
@@ -183,7 +196,7 @@ define(
 		for (var i = 0, j = 0, l = id.length; i < l; i += 4, j++) {
 			var cBrightness = this.clamp(0, (1 - this.darkArray[j]), 1) * this.settings.brightness;
 			var colour = Colour.hslaToRgba(
-					(this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor * (1-this.darkArray[j]))) % 1,
+					(this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor * (1 - this.darkArray[j]))) % 1,
 					this.settings.colour.s,
 					this.densityArray[j],
 					this.densityArray[j]);
@@ -200,10 +213,9 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.splatStars = function () {
-		this.status = Layer.Status.Processing;
+		//return;
 		var ctx = this.canvas.getContext("2d");
 		ctx.save();
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
 
 		ctx.globalCompositeOperation = 'lighten';
 		var count = Math.round(this.canvas.width * this.canvas.height * this.settings.brightness * 0.05);
@@ -219,7 +231,7 @@ define(
 			}
 
 			var g = this.gaussian.pdf(x);
-			var y = this.gaussian.random() * (g*2+0.25);
+			var y = this.gaussian.random() * (g * 2 + 0.25);
 
 			if (y < -1 || y > 1) {
 				i--;
@@ -228,7 +240,7 @@ define(
 
 			var realX = Math.floor((x + 1) * 0.5 * this.canvas.width);
 			var realY = Math.floor((y + 1) * 0.5 * this.canvas.height);
-			
+
 			var j = realX + realY * this.canvas.width;
 
 			if (this.darkArray[j] > 0.99) {
@@ -240,8 +252,7 @@ define(
 			var saturation = this.settings.colour.s;
 			var lightness = this.densityArray[j] * this.seedRandom.between(0.1, 1);
 			var radius = this.seedRandom.betweenPow(0.4, 2, 4);
-			//var alpha =  this.clamp(0,this.densityArray[j],1) * this.clamp(0,Math.pow(1-this.darkArray[j],2),1);
-			var alpha =  this.clamp(0,this.densityArray[j],1) * (1-this.darkArray[j]);
+			var alpha = this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]);
 			ctx.setTransform(1, 0, 0, 1, realX, realY);
 
 			if (radius <= 0.5) {
@@ -264,6 +275,7 @@ define(
 	// --------------------------------------------
 
 	LayerMilkyWay.prototype.startProcessing = function () {
+		this.setProcessingStartTime();
 		this.status = Layer.Status.Processing;
 
 		imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
@@ -280,6 +292,7 @@ define(
 		this.status = Layer.Status.Success;
 
 		imageDataUint8 = undefined;
+		this.setProcessingEndTime();
 	}
 
 	return LayerMilkyWay;

@@ -19,6 +19,7 @@ define(
 	LayerPointStars.prototype.constructor = LayerPointStars;
 
 	LayerPointStars.prototype.startProcessing = function () {
+		this.setProcessingStartTime();
 		this.status = Layer.Status.Processing;
 
 		var wxh = this.canvas.width * this.canvas.height;
@@ -34,6 +35,7 @@ define(
 
 		this.colourArrayToCanvas(m, this.canvas);
 		this.status = Layer.Status.Success;
+		this.setProcessingEndTime();
 	}
 
 	return LayerPointStars;

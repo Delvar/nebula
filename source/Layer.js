@@ -16,6 +16,8 @@ define(
 		this.rotation = 0;
 		this.type = undefined;
 		this.status = Layer.Status.Unknown;
+		this.startTime = 0;
+		this.endTime = 0;
 	}
 
 	Layer.Status = {
@@ -38,10 +40,20 @@ define(
 	}
 
 	Layer.prototype.startProcessing = function () {
-		this.status = Layer.Status.Processing;
-		this.status = Layer.Status.Success;
+		//this.status = Layer.Status.Processing;
+		throw ("Please implement method startProcessing");
+		//this.status = Layer.Status.Success;
 	}
 
+	Layer.prototype.setProcessingStartTime = function () {
+		this.startTime = performance.now();
+	}
+	
+	Layer.prototype.setProcessingEndTime = function () {
+		this.endTime = performance.now();
+		console.log(this.canvas.id + ": " + Math.floor(this.endTime - this.startTime) + " milliseconds.");
+	}
+	
 	function clamp(min, v, max) {
 		return Math.max(min, Math.min(v, max));
 	}

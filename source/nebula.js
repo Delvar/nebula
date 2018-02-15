@@ -202,8 +202,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		seedRandom.setSeed(milkyWay.seed);
 
-		milkyWay.scale = seedRandom.between(settings.realWidth / 4, settings.realWidth / 10);
-		milkyWay.nScale = seedRandom.between(milkyWay.scale * 0.25, milkyWay.scale * 1.25);
+		milkyWay.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth / 6);
+		milkyWay.nScale = seedRandom.between(settings.realWidth/4,settings.realWidth/5);
 		milkyWay.widthDevisor = seedRandom.between(2, 8);
 
 		milkyWay.gaussianVariance = 0.02 + seedRandom.betweenPow(0, 1, 4);
@@ -222,7 +222,8 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 		milkyWay.rotation = seedRandom.between(0, Math.PI);
-		milkyWay.brightness = seedRandom.between(0.01, 0.5);
+		milkyWay.brightness = seedRandom.between(0.1, 0.5);
+		milkyWay.brightness = 1;
 
 		settings.milkyWay = milkyWay;
 

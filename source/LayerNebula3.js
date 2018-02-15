@@ -169,8 +169,8 @@ define(
 			}
 		}
 
-		console.log('normalize: ' + ((maxDensity - minDensity) < 0.5) + ' || ' + (minDensity > 0.5) + ' || ' + (maxDensity > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
-		console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDepth', maxDepth, 'minDepth', minDepth);
+		//console.log('normalize: ' + ((maxDensity - minDensity) < 0.5) + ' || ' + (minDensity > 0.5) + ' || ' + (maxDensity > 1) + ' || ' + (minDepth < 0) + ' || ' + (maxDepth > this.maxDepth));
+		//console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDepth', maxDepth, 'minDepth', minDepth);
 
 		if (((maxDensity - minDensity) < 0.5) || (minDensity > 0.5) || (maxDensity > 1) || (minDepth < 0) || (maxDepth > this.maxDepth)) {
 			s.normalize = true;
@@ -425,6 +425,7 @@ define(
 	// --------------------------------------------
 
 	LayerNebula.prototype.startProcessing = function () {
+		this.setProcessingStartTime();
 		this.status = Layer.Status.Processing;
 		var ctx = this.canvas.getContext("2d");
 
@@ -446,6 +447,7 @@ define(
 		this.settings.layer = this;
 
 		this.status = Layer.Status.Success;
+		this.setProcessingEndTime();
 	}
 
 	return LayerNebula;

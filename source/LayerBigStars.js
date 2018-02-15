@@ -17,6 +17,7 @@ define(
 	LayerBigStars.prototype.constructor = LayerBigStars;
 
 	LayerBigStars.prototype.startProcessing = function () {
+		this.setProcessingStartTime();
 		this.status = Layer.Status.Processing;
 		var ctx = this.canvas.getContext("2d");
 		var count = Math.round(this.canvas.width * this.canvas.height * this.density * 0.005);
@@ -35,6 +36,7 @@ define(
 		}
 		ctx.restore();
 		this.status = Layer.Status.Success;
+		this.setProcessingEndTime();
 	}
 
 	return LayerBigStars;
