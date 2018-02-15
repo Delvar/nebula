@@ -56,11 +56,10 @@ define(
 		var pdf = this.gaussian.pdf(centeredX);
 		var g = pdf * 0.8;
 
-		var x = (originalX * this.canvas.width) / scale + offsetX;
+		var x = (originalX * this.canvas.width) / (scale * 2) + offsetX;
 		var y = (originalY * this.canvas.height) / scale + offsetY;
 
-		//nScale = nScale*2;
-		var nx = (originalX * this.canvas.width) / nScale + offsetX;
+		var nx = (originalX * this.canvas.width) / (nScale * 2) + offsetX;
 		var ny = (originalY * this.canvas.height) / nScale + offsetY;
 
 		var r = tempReturn; // = [0, 0, 0];
@@ -76,16 +75,15 @@ define(
 		if (abs_y >= g) {
 			glow = (1 - (dist_g_y / dist_g_edge)) * crossPoint; ;
 		} else {
-			glow = ((1 - Math.pow(abs_y / g,3)) * (1 - crossPoint) * pdf) + crossPoint;
+			glow = ((1 - Math.pow(abs_y / g, 3)) * (1 - crossPoint) * pdf) + crossPoint;
 		}
 
 		var density = glow;
-		//var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.5, ny * 0.5) + Noise.Blender.TwoD.FastVoronoi_F1(nx, ny);
 		var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx, ny) * Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.5, ny * 0.5);
-		darkDensity = this.clamp(0, 1 - Math.pow(darkDensity*10, 2), 1);
+		darkDensity = this.clamp(0, 1 - Math.pow(darkDensity * 10, 2), 1);
 
 		var pwHL = this.pwHL;
-		var pwr = pwHL ;//* pwHL;
+		var pwr = pwHL; //* pwHL;
 		var dHuePwr = this.settings.dHuePwr;
 
 		for (var i = 1; i < this.settings.octaves; i++) {
@@ -93,11 +91,11 @@ define(
 			dHue += (dist[0] * dist[1] * dHuePwr);
 
 			darkDensity += Noise.perlin2(dist[4], dist[5]) * pwr * darkDensity;
-			
+
 			dHuePwr *= pwHL;
 			pwr *= pwHL;
 			density += (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * density);
-						
+
 			x *= this.settings.lacunarity;
 			y *= this.settings.lacunarity;
 		}
@@ -243,16 +241,23 @@ define(
 
 			var j = realX + realY * this.canvas.width;
 
-			if (this.darkArray[j] > 0.99) {
+			if (this.darkArray[j] > 0.99 || this.densityArray[j] <= 0) {
 				//i--;
 				continue;
 			}
 
+			var alpha = this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]) * this.settings.brightness;
+			
+			if (alpha <= 0) {
+				continue;
+			}
+			
 			var hue = ((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor))) % 1;
 			var saturation = this.settings.colour.s;
 			var lightness = this.densityArray[j] * this.seedRandom.between(0.1, 1);
 			var radius = this.seedRandom.betweenPow(0.4, 2, 4);
-			var alpha = this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]);
+
+
 			ctx.setTransform(1, 0, 0, 1, realX, realY);
 
 			if (radius <= 0.5) {

@@ -222,8 +222,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 		milkyWay.rotation = seedRandom.between(0, Math.PI);
-		milkyWay.brightness = seedRandom.between(0.1, 0.5);
-		milkyWay.brightness = 1;
+		milkyWay.brightness = seedRandom.between(0.1, 1);
 
 		settings.milkyWay = milkyWay;
 
