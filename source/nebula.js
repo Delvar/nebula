@@ -217,7 +217,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		milkyWay.widthDevisor = seedRandom.between(2, 8);
 
 		milkyWay.gaussianVariance = 0.02 + seedRandom.betweenPow(0, 1, 4);
-		milkyWay.gaussianRange = 1; //seedRandom.between(1, 1);
+		milkyWay.gaussianRange = seedRandom.between(0.1, 0.8);
 
 		//used in old milk way class
 		milkyWay.gaussianMultiplier = seedRandom.between(0.05, 0.5);

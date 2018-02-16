@@ -53,8 +53,8 @@ define(
 		var centeredX = originalX * 2 - 1;
 		var centeredY = originalY * 2 - 1;
 
-		var pdf = this.gaussian.pdf(centeredX);
-		var g = pdf * 0.8;
+		var pdf = this.gaussian.pdfBase(centeredX);
+		var g = pdf * this.settings.gaussianRange;
 
 		var x = (originalX * this.canvas.width) / (scale * 2) + offsetX;
 		var y = (originalY * this.canvas.height) / scale + offsetY;
@@ -341,6 +341,7 @@ define(
 			}
 
 			var alpha = this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]) * this.settings.brightness;
+			alpha += this.seedRandom.between(0,1-alpha) * 0.5;
 			//alpha = Math.round(alpha * 100) / 100;
 
 			if (alpha <= 0) {
