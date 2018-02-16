@@ -8,9 +8,9 @@ require.config({
 	baseUrl: 'source'
 });
 
-requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerNebula3', 'LayerNebula4', 'LayerVignette', 'LayerMilkyWay',
+requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'LayerBrightStar', 'LayerNebula', 'LayerNebula2', 'LayerNebula3', 'LayerNebula4', 'LayerVignette', 'LayerMilkyWay', 'LayerMilkyWay2', 'LayerMilkyWay3',
 		'Random/SeedRandom'],
-	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerNebula3, LayerNebula4, LayerVignette, LayerMilkyWay) {
+	function (Colour, Random, Layer, LayerPointStars, LayerBigStars, LayerBrightStar, LayerNebula, LayerNebula2, LayerNebula3, LayerNebula4, LayerVignette, LayerMilkyWay, LayerMilkyWay2, LayerMilkyWay3) {
 
 	seedRandom = new Random.SeedRandom();
 
@@ -84,6 +84,13 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		}
 		if (settings.nebulaMode === undefined || settings.nebulaMode === '' || isNaN(settings.nebulaMode)) {
 			settings.nebulaMode = 3;
+		}
+
+		if (typeof(queryVars['milkyWayMode']) !== 'undefined') {
+			settings.milkyWayMode = parseInt(queryVars['milkyWayMode']);
+		}
+		if (settings.milkyWayMode === undefined || settings.milkyWayMode === '' || isNaN(settings.milkyWayMode)) {
+			settings.milkyWayMode = 3;
 		}
 
 		if (typeof(queryVars['vignette']) !== 'undefined') {
@@ -202,32 +209,47 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 
 		seedRandom.setSeed(milkyWay.seed);
 
+		//milkyWay.scale = seedRandom.between(settings.realWidth, settings.realWidth);
 		milkyWay.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth / 6);
-		milkyWay.nScale = seedRandom.between(settings.realWidth/4,settings.realWidth/5);
+		//milkyWay.nScale = seedRandom.between(100, 200);
+		milkyWay.nScale = seedRandom.between(settings.realWidth / 4, settings.realWidth / 5);
+		//milkyWay.widthDevisor = seedRandom.between(1, 8);
 		milkyWay.widthDevisor = seedRandom.between(2, 8);
 
 		milkyWay.gaussianVariance = 0.02 + seedRandom.betweenPow(0, 1, 4);
-		milkyWay.gaussianRange = seedRandom.between(1, 1);
+		milkyWay.gaussianRange = 1; //seedRandom.between(1, 1);
 
+		//used in old milk way class
+		milkyWay.gaussianMultiplier = seedRandom.between(0.05, 0.5);
+		milkyWay.gaussianMin = seedRandom.between(0, 0.6 - milkyWay.gaussianMultiplier);
+		milkyWay.alphaExponent = seedRandom.between(1, 5);
+
+		//milkyWay.roughness = seedRandom.between(0.4, 1);
 		milkyWay.roughness = 1;
 		milkyWay.lacunarity = seedRandom.between(1.5, 3);
 
+		//milkyWay.octaves = seedRandom.between(5, 8);
 		milkyWay.octaves = seedRandom.between(7, 9);
 		milkyWay.offsetX = seedRandom.between(0, 50000);
 		milkyWay.offsetY = seedRandom.between(0, 50000);
+		//milkyWay.distortionFactor = seedRandom.between(0.5, 2);
 		milkyWay.distortionFactor = seedRandom.between(1, 2);
+		//milkyWay.distortionScale = seedRandom.between(0.5, 5);
 		milkyWay.distortionScale = seedRandom.between(1, 3);
+		//milkyWay.hueFactor = seedRandom.between(-1, 1);
 		milkyWay.hueFactor = seedRandom.between(-0.5, 0.5);
+		//milkyWay.dHuePwr = seedRandom.between(0, 1);
 		milkyWay.dHuePwr = seedRandom.between(1, 1.5);
 
 		milkyWay.colour = new Colour.hsla(seedRandom.between(0, 1), seedRandom.between(0, 1), seedRandom.between(0.25, 1), seedRandom.between(0.5, 1));
 		milkyWay.rotation = seedRandom.between(0, Math.PI);
+		//milkyWay.brightness = seedRandom.between(0.05, 0.7);
 		milkyWay.brightness = seedRandom.between(0.1, 1);
 
 		settings.milkyWay = milkyWay;
 
 		seedOutput = document.getElementById("seed");
-		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&vignette=' + settings.vignette + '&debug=' + settings.debug + '&showLayers=' + settings.showLayers + '&seed=' + settings.seed;
+		seedOutput.innerText = '?width=' + settings.width + '&height=' + settings.height + '&pixleScale=' + settings.pixleScale + '&nebulaMode=' + settings.nebulaMode + '&milkyWayMode=' + settings.milkyWayMode + '&vignette=' + settings.vignette + '&debug=' + settings.debug + '&showLayers=' + settings.showLayers + '&seed=' + settings.seed;
 		//console.log(settings);
 
 		settings.ratioWidthHeight = settings.width / settings.height;
@@ -244,14 +266,35 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		generateConfiguration(settings);
 	}
 
-	if (settings.nebulaMode == 2) {
+	switch (settings.nebulaMode) {
+	case 1:
+		//Do nothing
+		break;
+	case 2:
 		LayerNebula = LayerNebula2;
-	} else if (settings.nebulaMode == 3) {
+		break;
+	case 3:
 		LayerNebula = LayerNebula3;
-	} else if (settings.nebulaMode == 4) {
+		break;
+	case 4:
 		LayerNebula = LayerNebula4;
-	} else {
-		// do nothing!
+		break;
+	default:
+		throw ("Invalid nebulaMode should be 1 to 4 got " + settings.nebulaMode);
+	}
+
+	switch (settings.milkyWayMode) {
+	case 1:
+		//Do nothing
+		break;
+	case 2:
+		LayerMilkyWay = LayerMilkyWay2;
+		break;
+	case 3:
+		LayerMilkyWay = LayerMilkyWay3;
+		break;
+	default:
+		throw ("Invalid milkyWayMode should be 1 to 3 got " + settings.milkyWayMode);
 	}
 
 	//console.log(JSON.stringify(settings));

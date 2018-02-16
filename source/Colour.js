@@ -61,7 +61,7 @@ define(
 
 		return c;
 	}
-	
+
 	Colour.hslaText = function (h, s, l, a) {
 		h = Math.floor(h * 360);
 		s = Math.floor(s * 100);

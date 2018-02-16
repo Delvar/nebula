@@ -65,12 +65,12 @@ define(
 		var value = Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]);
 
 		//if (value <= 0) {
-//			r[0] = 0;
-	//		r[1] = 0;
+		//			r[0] = 0;
+		//		r[1] = 0;
 		//	r[2] = 0;
-			//return r;
+		//return r;
 		//}
-		
+
 		var pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
 		var pwr = pwHL;
 		var dHuePwr = this.settings.dHuePwr;
@@ -90,7 +90,7 @@ define(
 			y *= lacunarity;
 		}
 
-		r[0] = Math.pow(value,alphaExponent);
+		r[0] = Math.pow(value, alphaExponent);
 		r[1] = value * 0.5;
 		r[2] = dHue;
 		return r;
@@ -152,7 +152,7 @@ define(
 	// --------------------------------------------
 
 	var imageDataUint8;
-	
+
 	LayerNebula.prototype.densityArrayToCanvas = function () {
 		if (typeof this.canvasDensity === "undefined")
 			return;
@@ -261,7 +261,7 @@ define(
 
 	// --------------------------------------------
 	var tempVector3 = new Vector3();
-	
+
 	LayerNebula.prototype.getDirectLightAt = function (x, y, j) {
 		var directLight = 0.0;
 
@@ -269,7 +269,7 @@ define(
 		var normal = this.normalArray[j];
 		var density = this.densityArray[j];
 
-		var v = tempVector3;//Vector3.create();
+		var v = tempVector3; //Vector3.create();
 		var aspect = this.canvas.height / this.canvas.width;
 		var dotProduct;
 
@@ -392,7 +392,7 @@ define(
 		this.status = Layer.Status.Processing;
 
 		imageDataUint8 = new Uint8ClampedArray(this.canvas.width * this.canvas.height * 4);
-		
+
 		this.generateNebulaData();
 		this.densityArrayToCanvas();
 
@@ -411,7 +411,7 @@ define(
 		this.settings.layer = this;
 
 		this.status = Layer.Status.Success;
-		
+
 		imageDataUint8 = undefined;
 		this.setProcessingEndTime();
 	}

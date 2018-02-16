@@ -48,12 +48,12 @@ define(
 	Layer.prototype.setProcessingStartTime = function () {
 		this.startTime = performance.now();
 	}
-	
+
 	Layer.prototype.setProcessingEndTime = function () {
 		this.endTime = performance.now();
 		console.log(this.canvas.id + ": " + Math.floor(this.endTime - this.startTime) + " milliseconds.");
 	}
-	
+
 	function clamp(min, v, max) {
 		return Math.max(min, Math.min(v, max));
 	}
@@ -93,7 +93,7 @@ define(
 	Layer.prototype.colourArrayToCanvas = function (colourArray, canvas) {
 		if (typeof canvas === "undefined")
 			return;
-		
+
 		var imageDataUint8 = new Uint8ClampedArray(canvas.width * canvas.height * 4);
 		this.colourArrayToImageDataUint8(colourArray, imageDataUint8);
 		var ctx = canvas.getContext("2d");

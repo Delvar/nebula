@@ -84,15 +84,15 @@ define(
 					da = d;
 			}
 		}
-		
+
 		//this bring it into the range -1 to +1
 		//after experimentation, found this is the usual maximum we get from the distance function.
 		//each distance function has its own range but this is real distance.
-		
+
 		//return (da/1.4142135623730951 * 2) -1;
-		
+
 		//in the range 0 to 1
-		return (da/1.4142135623730951);
+		return (da / 1.4142135623730951);
 	}
 
 	module.FastVoronoi_F1 = FastVoronoi;

@@ -21,7 +21,7 @@ define(
 
 		//scale so that maximum at mean is 1 then multiple by range later.
 		this.scale = this.standardDeviation * Math.sqrt(2 * Math.PI);
-		
+
 		this.prng = prng || Math.random;
 	}
 
@@ -37,7 +37,7 @@ define(
 		var e = Math.exp(-Math.pow(x - this.mean, 2) / (2 * this.variance));
 		return e / m * this.scale;
 	};
-	
+
 	Gaussian.prototype.random = function () {
 		var V1,
 		V2,

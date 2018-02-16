@@ -37,7 +37,7 @@ define(
 	var MathSign = Math.sign;
 	var FastVoronoi_F1 = Noise.Blender.TwoD.FastVoronoi_F1;
 	var perlin2 = Noise.perlin2;
-	
+
 	LayerNebula.prototype = Object.create(Layer.prototype);
 	LayerNebula.prototype.constructor = LayerNebula;
 
@@ -143,7 +143,7 @@ define(
 	}
 
 	// --------------------------------------------
-	
+
 	LayerNebula.prototype.generateNebulaData = function () {
 		var w = this.canvas.width;
 		var h = this.canvas.height;
@@ -299,50 +299,50 @@ define(
 		var directLight = 0;
 
 		var depth = this.depthArray[j];
-		
+
 		var nx = this.normalArray[j * 3];
 		var ny = this.normalArray[j * 3 + 1];
 		var nz = this.normalArray[j * 3 + 2];
-		
+
 		//var n = [this.normalArray[j * 3], this.normalArray[j * 3 + 1], this.normalArray[j * 3 + 2]];
-		
+
 		var density = this.densityArray[j];
 
 		for (var i = 0; i < this.brightStars.length; i++) {
 			var l = this.brightStars[i];
 
-// --
+			// --
 			var vx = l.x - x;
 			var vy = (l.y - y) * (this.canvas.height / this.canvas.width);
 			var vz = l.tz - depth;
 			var sqMag = Vector3.squareMagnitude(vx, vy, vz) * 250;
 			var tv = Vector3.normalize(vx, vy, vz);
-			vx=tv[0];
-			vy=tv[1];
-			vz=tv[2];
+			vx = tv[0];
+			vy = tv[1];
+			vz = tv[2];
 			//[vx,vy,vz] = Vector3.normalize(vx, vy, vz);
 			var dotProduct = Vector3.dotProduct(nx, ny, nz, vx, vy, vz);
-// --
+			// --
 			//var v = [l.x - x, (l.y - y) * (this.canvas.height / this.canvas.width), l.tz - depth];
 			//var sqMag = Vector3.squareMagnitude(v[0], v[1], v[2]) * 250;
 			//v = Vector3.normalize(v[0], v[1], v[2]);
 			//var dotProduct = Vector3.dotProduct(n[0], n[1], n[2], v[0], v[1], v[2]);
-// --
-			
+			// --
+
 			dotProduct = MathPow(dotProduct, 5) * MathSign(dotProduct);
 			directLight += (l.brightness / sqMag) * dotProduct
 		}
-// --
+		// --
 		var vx = 0.5 - x;
 		var vy = (0.5 - y) * (this.canvas.height / this.canvas.width);
 		var vz = 10;
-		[vx,vy,vz] = Vector3.normalize(vx, vy, vz);
+		[vx, vy, vz] = Vector3.normalize(vx, vy, vz);
 		var dotProduct = Vector3.dotProduct(nx, ny, nz, vx, vy, vz);
-// --		
+		// --
 		//var v = [0.5 - x, (0.5 - y) * (this.canvas.height / this.canvas.width), 10];
 		//v = Vector3.normalize(v[0], v[1], v[2]);
 		//var dotProduct = Vector3.dotProduct(n[0], n[1], n[2], v[0], v[1], v[2]);
-// --
+		// --
 
 		return directLight + (MathPow(MathMax(dotProduct, 0), 2 + (10 * density)) * this.settings.ambiant);
 	}

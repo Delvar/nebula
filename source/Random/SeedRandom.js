@@ -123,10 +123,10 @@ define(
 				min = t;
 			}
 			var range = max - min;
-			return min + Math.pow(this.random(),pow) * range;
+			return min + Math.pow(this.random(), pow) * range;
 		}
 		this.betweenPow = betweenPow;
-		
+
 		//math['seed' + rngname] = seedrandom;
 
 		//

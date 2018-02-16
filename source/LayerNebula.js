@@ -4,7 +4,7 @@ define(
 		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni'],
 	function (Layer, Colour, Noise, Vector3) {
 	"use strict";
-	
+
 	function LayerNebula(canvas, canvasNormal, canvasDensity, canvasDirectLight, canvasDepth, settings, brightStars) {
 		Layer.call(this, canvas);
 		this.canvasNormal = canvasNormal;

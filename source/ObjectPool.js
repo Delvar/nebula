@@ -14,7 +14,7 @@ define(
 		if (typeof objType.prototype._poolInit !== 'function') {
 			throw ('require _poolInit function on pooled class');
 		}
-		
+
 		if (size <= 0 || !isFinite(size)) {
 			throw ('size <= 0');
 		}
@@ -58,7 +58,7 @@ define(
 				obj = new this.objType();
 			}
 		}
-		
+
 		if (!obj) {
 			obj = this.pool[this.position++];
 			this.createPoolCount++;
@@ -67,7 +67,7 @@ define(
 		//re-initialise the object.
 		//obj.constructor.apply(obj, arguments);
 		obj._poolInit.apply(obj, arguments);
-		
+
 		if (this.position > this.positionTide) {
 			this.positionTide = this.position;
 		}
