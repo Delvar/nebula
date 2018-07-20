@@ -1,12 +1,9 @@
-define(
-	'LayerNebula3',
-	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
-		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni', 'Random/SeedRandom'],
-	function (Layer, Colour, Noise, Vector3, Random) {
-	"use strict";
+import {default as Layer} from './Layer.js';
+import * as Random from './Random.js';
 
-	function LayerNebula(canvas, canvasNormal, canvasDensity, canvasDirectLight, canvasDepth, settings, brightStars) {
-		Layer.call(this, canvas);
+export default class LayerNebula3 extends Layer {
+	constructor(canvas, canvasNormal, canvasDensity, canvasDirectLight, canvasDepth, settings, brightStars) {
+		super(canvas);
 		this.canvasNormal = canvasNormal;
 		this.canvasDensity = canvasDensity;
 		this.canvasDirectLight = canvasDirectLight;
@@ -25,6 +22,16 @@ define(
 
 		this.seedRandom = new Random.SeedRandom(settings.seed);
 	}
+}
+
+/*
+define(
+	'LayerNebula3',
+	['Layer', 'Colour', 'Noise', 'Vector3', 'Random',
+		'Noise/Perlin', 'Noise/Simplex', 'Noise/Blender', 'Noise/Blender/TwoD/FastVoroni', 'Random/SeedRandom'],
+	function (Layer, Colour, Noise, Vector3, Random) {
+	"use strict";
+
 
 	var MathFloor = Math.floor;
 	var MathPow = Math.pow;
@@ -112,18 +119,18 @@ define(
 		r[0] = MathPow(value, alphaExponent);
 		r[1] = value * 0.5;
 
-		/* // Make depth domes...
-		var numberOfDomes = 1;
-		var p = this.canvas.width / numberOfDomes / 2;
-		var ox = (originalX - p) * numberOfDomes / (this.canvas.width / 2);
-		var oy = (originalY - p) * numberOfDomes / (this.canvas.width / 2);
-		var tx = 1 - MathAbs(ox % 2 - 1);
-		var ty = 1 - MathAbs(oy % 2 - 1);
-		var over = 1.25;
-		var d = MathSqrt(tx * tx + ty * ty) * over;
-		var d = this.clamp(0, d, 1) * MathPI / 2;
-		r[1] = MathCos(d) / (numberOfDomes * over);
-		 */
+		 // Make depth domes...
+		//var numberOfDomes = 1;
+		//var p = this.canvas.width / numberOfDomes / 2;
+		//var ox = (originalX - p) * numberOfDomes / (this.canvas.width / 2);
+		//var oy = (originalY - p) * numberOfDomes / (this.canvas.width / 2);
+		//var tx = 1 - MathAbs(ox % 2 - 1);
+		//var ty = 1 - MathAbs(oy % 2 - 1);
+		//var over = 1.25;
+		//var d = MathSqrt(tx * tx + ty * ty) * over;
+		//var d = this.clamp(0, d, 1) * MathPI / 2;
+		//r[1] = MathCos(d) / (numberOfDomes * over);
+
 
 		r[2] = dHue;
 		return r;
@@ -454,3 +461,4 @@ define(
 
 	return LayerNebula;
 });
+*/

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+<!--<![endif]-->
+<head>
+	<meta charset="utf-8">
+	<meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+	<title>Import Test by Morgan Gilroy</title>
+	<meta content="" name="description">
+	<meta content="width=device-width" name="viewport">
+	<script>
+	window.onerror = function(msg, url, linenumber) {
+		alert('Error: '+msg);
+		return false;
+	}
+	</script>
+	<script type="module" src="source/Nebula.js"></script>
+	
+	<style type="text/css">
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+
+}
+canvas {
+    background-color: #111111;
+}
+#main {
+    line-height: 0;
+	font-size: 0px;
+}
+
+.visible {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 1s linear;
+}
+.hidden {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 1s, opacity 1s linear;
+}
+.loading {
+    display: table;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+.loading .middle {
+    display: table-cell;
+    vertical-align: middle;
+    /* border: 5px solid lightblue; */
+}
+.loading .middle .inner {
+    margin-left: auto;
+    margin-right: auto;
+    width: 140px;
+    /* border: 5px solid lightgreen; */
+}
+.spin {
+    text-align: center;
+}
+.spin .ball {
+    width: 20px;
+    height: 20px;
+    background-color: #000;
+    border: 2px solid #FFF;
+    border-radius: 100%;
+    display: inline-block;
+    animation: ball-pop 2.2s infinite ease-in-out both;
+    opacity: 0.5;
+}
+.spin .ball-1 {
+    animation-delay: -0.4s;
+}
+.spin .ball-2 {
+    animation-delay: -0.2s;
+}
+.spin .ball-3 {
+    animation-delay: 0s;
+}
+.spin .ball-4 {
+    animation-delay: +0.2s;
+}
+.spin .ball-5 {
+    animation-delay: +0.4s;
+}
+@keyframes ball-pop {
+    0%, 100% {
+        transform: scale(0.1);
+        opacity: 0;
+    }
+    25% {
+        transform: scale(1.0);
+        opacity: 1;
+    }
+}
+
+.button {
+	width: 3em;
+    height: 3em;
+	border-radius: 1.5em;
+	background-color: cornflowerblue;
+	pointer-events: all;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.button::after {
+    width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    content: "";
+    display: block;
+	box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out;
+}
+
+.button:hover::after {
+	opacity: 1;
+}
+
+#gui {
+    position: fixed;
+    pointer-events: none;
+    margin: 2em;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#seedWrapper {
+	position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
+
+#seedWrapper2 {
+    width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    transition: all 0.25s linear;
+    overflow: hidden;
+    float: right;
+    pointer-events: all;
+    opacity: 1;
+    background-color: #FFFFFF;
+    background-color: cornflowerblue;
+}
+
+#seedWrapper2:active, #seedWrapper2:hover, #seedWrapper2:focus {
+    background-color: #FFFFFF;
+    opacity: 1;
+    transition: all 0.25s linear;
+    width: 100%;
+    padding-right: 1.5em;
+}
+
+#seed {
+    line-height: 3em;
+    white-space: pre;
+    margin-right: 1em;
+    margin-left: 1em;
+}
+
+#seedButton {
+    background-image: url(images/coffee.svg);
+    background-size: 1.5em;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+	transition: all 0.25s linear;
+}
+
+#seedButton:hover {
+	background-color: #5178bf;
+}
+
+#downloadButton {
+    background-image: url(images/download.svg);
+    background-size: 2em;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    transition: all 0.25s linear;
+}
+
+#downloadButton:hover {
+	background-color: #5178bf;
+}
+
+#attributionWrapper {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+#attributionWrapper2 {
+	width: 3em;
+    height: 3em;
+    border-radius: 1.5em;
+    transition: all 0.25s linear;
+    overflow: hidden;
+    float: left;
+    pointer-events: all;
+    opacity: 1;
+    background-color: #FFFFFF;
+    background-color: cornflowerblue;
+}
+
+#attributionWrapper2:active, #attributionWrapper2:hover, #attributionWrapper2:focus {
+    background-color: #FFFFFF;
+    opacity: 1;
+    transition: all 0.25s linear;
+    width: 100%;
+    padding-left: 2.5em;
+}
+
+#attribution {
+    line-height: 3em;
+    margin-left: 1em;
+}
+
+#attributionButton {
+    background-image: url(images/attribution.svg);
+    background-size: 1.5em;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: all 0.25s linear;
+}
+
+#attributionButton:hover {
+	background-color: #5178bf;
+}
+</style>
+	
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-104596969-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+</head>
+<body>
+	<div id="loading" class="loading visible">
+		<div class="middle">
+			<div class="inner">
+				<div class="spin">
+					<div class="ball ball-1"></div>
+					<div class="ball ball-2"></div>
+					<div class="ball ball-3"></div>
+					<div class="ball ball-4"></div>
+					<div class="ball ball-5"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="gui" class="visible">
+		<div id="seedWrapper">
+			<div id="seedWrapper2">
+				<div id="seed"></div>
+				<div id="seedButton" class="button"></div>
+			</div>
+		</div>
+		<a href="#" id="downloadButton" download="nebula.png" class="button" crossOrigin="anonymous"></a>
+		
+		<div id="attributionWrapper">
+			<div id="attributionWrapper2">
+				<div id="attribution">
+					<div>Icons made by <a href="https://www.flaticon.com/authors/pixel-perfect" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+				</div>
+				<div id="attributionButton" class="button"></div>
+			</div>
+		</div>
+		
+		
+	</div>
+	
+	<!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+	<div id="main" role="main" style="">
+		<canvas id="output"></canvas>
+	</div>
+	<div id="list"></div>
+</body>
+
+</html>

@@ -210,9 +210,10 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		seedRandom.setSeed(milkyWay.seed);
 
 		//milkyWay.scale = seedRandom.between(settings.realWidth, settings.realWidth);
-		milkyWay.scale = seedRandom.between(settings.realWidth / 2, settings.realWidth / 6);
+		milkyWay.scale = seedRandom.between(settings.realWidth / 5, settings.realWidth / 10);
 		//milkyWay.nScale = seedRandom.between(100, 200);
-		milkyWay.nScale = seedRandom.between(settings.realWidth / 4, settings.realWidth / 5);
+		//		milkyWay.nScale = seedRandom.between(settings.realWidth / 4, settings.realWidth / 5);
+		milkyWay.nScale = seedRandom.between(settings.realWidth / 5, settings.realWidth / 6);
 		//milkyWay.widthDevisor = seedRandom.between(1, 8);
 		milkyWay.widthDevisor = seedRandom.between(2, 8);
 
@@ -225,7 +226,7 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		milkyWay.alphaExponent = seedRandom.between(1, 5);
 
 		//milkyWay.roughness = seedRandom.between(0.4, 1);
-		milkyWay.roughness = 1;
+		milkyWay.roughness = 0.75;
 		milkyWay.lacunarity = seedRandom.between(1.5, 3);
 
 		//milkyWay.octaves = seedRandom.between(5, 8);
@@ -424,15 +425,20 @@ requirejs(['Colour', 'Random', 'Layer', 'LayerPointStars', 'LayerBigStars', 'Lay
 		ctx.fillRect(0, 0, output.width, output.height);
 		ctx.restore();
 		for (var i = 0; i < layers.length; i++) {
-			ctx.save();
-			ctx.globalCompositeOperation = layers[i].compositeOperation;
-			ctx.translate(layers[i].offsetX, layers[i].offsetY);
-			ctx.scale(layers[i].scaleX, layers[i].scaleY);
-			ctx.rotate(layers[i].rotation);
-			ctx.translate(-layers[i].regX, -layers[i].regY);
+			if (layers[i].status == Layer.Status.Success) {
+				ctx.save();
+				ctx.globalCompositeOperation = layers[i].compositeOperation;
+				ctx.translate(layers[i].offsetX, layers[i].offsetY);
+				ctx.scale(layers[i].scaleX, layers[i].scaleY);
+				ctx.rotate(layers[i].rotation);
+				ctx.translate(-layers[i].regX, -layers[i].regY);
 
-			ctx.drawImage(layers[i].canvas, 0, 0);
-			ctx.restore();
+				ctx.drawImage(layers[i].canvas, 0, 0);
+				ctx.restore();
+				//if (layers[i].offsetY != 0 || layers[i].offsetY != 0 || -layers[i].regX != 0 || -layers[i].regY != 0) {
+				//	console.log(layers[i]);
+				//}
+			}
 		}
 
 	}

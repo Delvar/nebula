@@ -208,6 +208,8 @@ function draw_normal() {
 	context.fillText('mean: ' + calculatedMean.toPrecision(3), canvas.width, 30);
 	context.fillText('variance: ' + calculatedVariance.toPrecision(3), canvas.width, 45);
 	context.fillText('max: ' + (maxNormalCount/canvas.height).toPrecision(3), canvas.width, 60);
+	
+	
 		
 	context.textBaseline = 'top';
 	context.textAlign = 'left';
@@ -217,6 +219,7 @@ function draw_normal() {
 	context.fillText('mean: ' + mean.toPrecision(3), 0, 30);
 	context.fillText('variance: ' + variance.toPrecision(3), 0, 45);
 	context.fillText('max: ' + maxPdf.toPrecision(3), 0, 60);
+	context.fillText('totalPdf: ' + Math.floor(totalPdf), 0, 75);
 }
 </script>
 	<div>

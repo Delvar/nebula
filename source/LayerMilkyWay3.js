@@ -21,10 +21,11 @@ define(
 		var seedRandom = new Random.SeedRandom(settings.seed);
 		this.seedRandom = seedRandom;
 		this.gaussian = new Random.Gaussian(0, this.settings.gaussianVariance, this.settings.gaussianRange, function () {
-				return seedRandom.random()
+				return seedRandom.random();
 			});
 
-		this.pwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
+		this.pwHL = Math.pow(this.settings.lacunarity, -(this.settings.roughness*2));
+		this.darkPwHL = Math.pow(this.settings.lacunarity, -this.settings.roughness);
 		//this.settings.nScale = 100;
 	}
 
@@ -69,40 +70,54 @@ define(
 		var abs_y = Math.abs(centeredY);
 		var dist_g_edge = 1 - g;
 		var dist_g_y = abs_y - g;
-		var glow;
+		var oDensity;
 		var crossPoint = 0.5;
 
-		if (abs_y >= g) {
-			glow = (1 - (dist_g_y / dist_g_edge)) * crossPoint; ;
+		if (abs_y > g) {
+			oDensity = (1 - (dist_g_y / dist_g_edge)) * crossPoint;
 		} else {
-			glow = ((1 - Math.pow(abs_y / g, 3)) * (1 - crossPoint) * pdf) + crossPoint;
+			oDensity = ((1 - Math.pow(abs_y / g, 3)) * (1 - crossPoint) * pdf) + crossPoint;
 		}
-
-		var density = glow;
-		var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx, ny) * Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.5, ny * 0.5);
-		darkDensity = this.clamp(0, 1 - Math.pow(darkDensity * 10, 2), 1);
+		oDensity = this.clamp(0, oDensity, 1);
+		var density =0;
+		//var darkDensity = Noise.Blender.TwoD.FastVoronoi_F1(nx, ny);// * Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.6, ny * 0.6);
+		//var darkDensity = (Noise.perlin2(nx, ny)+1)/2;// * Noise.Blender.TwoD.FastVoronoi_F1(nx * 0.6, ny * 0.6);
+		var darkDensity = this.clamp(0, Noise.perlin2(nx, ny),1);
+		//darkDensity = this.clamp(0, 1 - Math.pow(darkDensity * 10, 2), 1);
+		//darkDensity = this.clamp(0, Math.pow(darkDensity*10, 2), 1);
 
 		var pwHL = this.pwHL;
-		var pwr = pwHL; //* pwHL;
+		var darkPwHL = this.darkPwHL;
+		var pwr = pwHL;
+		var darkPwr = darkPwHL;
 		var dHuePwr = this.settings.dHuePwr;
+		var maxPosDensity = 1;
 
 		for (var i = 1; i < this.settings.octaves; i++) {
+			getDistortion2d(nx, ny, this.settings.distortionFactor, this.settings.distortionScale, Noise.perlin2, dist);
+			//darkDensity += Noise.perlin2(dist[4], dist[5]) * darkPwr;// * darkDensity;
+			darkPwr*= darkPwHL;
+			nx *= this.settings.lacunarity;
+			ny *= this.settings.lacunarity;
+			
 			getDistortion2d(x, y, this.settings.distortionFactor, this.settings.distortionScale, Noise.perlin2, dist);
-			dHue += (dist[0] * dist[1] * dHuePwr);
-
-			darkDensity += Noise.perlin2(dist[4], dist[5]) * pwr * darkDensity;
-
-			dHuePwr *= pwHL;
+			density += this.clamp(0, Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]), 1) * pwr * (1-oDensity);
 			pwr *= pwHL;
-			density += (Noise.Blender.TwoD.FastVoronoi_F1(dist[4], dist[5]) * pwr * density);
+						
+			dHue += (dist[0] * dist[1] * dHuePwr);
+			dHuePwr *= pwHL;
+			maxPosDensity += pwr * maxPosDensity;
 
 			x *= this.settings.lacunarity;
 			y *= this.settings.lacunarity;
 		}
-		r[0] = density;
+		//console.log('maxPosDensity',maxPosDensity);
+		//r[0] = 1 - this.clamp(0, density, 1);
+		r[0] = (1-density)*oDensity;// / maxPosDensity;
 		r[1] = dHue;
-		r[2] = Math.pow(this.clamp(0, (Math.abs(darkDensity * 1.1)) - 0.25, 1), 5);
+		//r[2] = Math.pow(this.clamp(0, (Math.abs(darkDensity * 1.5)) - 0.25, 1), 5);
 		//r[2] = Math.abs(darkDensity);
+		r[2] = this.clamp(0, darkDensity, 1);
 		return r;
 	}
 
@@ -149,7 +164,7 @@ define(
 		}
 
 		console.log('maxDensity: ', maxDensity, 'minDensity', minDensity, 'maxDark', maxDark, 'minDark', minDark);
-		//this.normalizeData(minDensity, maxDensity, maxDark, minDark);
+		this.normalizeData(minDensity, maxDensity, maxDark, minDark);
 	}
 	// --------------------------------------------
 
@@ -202,7 +217,7 @@ define(
 			id[i] = colour.r * cBrightness * 255;
 			id[i + 1] = colour.g * cBrightness * 255;
 			id[i + 2] = colour.b * cBrightness * 255;
-			id[i + 3] = this.densityArray[j] * 255;
+			id[i + 3] = 255;//this.densityArray[j] * 255;
 		}
 		var ctx = this.canvas.getContext("2d");
 		ctx.putImageData(new ImageData(id, this.canvas.width, this.canvas.height), 0, 0);
@@ -214,7 +229,6 @@ define(
 
 	//cache the colour string in an array
 	function getColour(hue, saturation, lightness, alpha) {
-
 		var hueIndex = Math.round(hue * 100);
 		var saturationIndex = Math.round(saturation * 100);
 		var lightnessIndex = Math.round(lightness * 100);
@@ -315,7 +329,7 @@ define(
 		var roundCount = 0;
 
 		for (var i = 0; i < count; i++) {
-			var x = this.gaussian.random();
+			var x = this.gaussian.random()*2;
 
 			if (x < -1 || x > 1) {
 				i--;
@@ -323,7 +337,7 @@ define(
 			}
 
 			var g = this.gaussian.pdf(x);
-			var y = this.gaussian.random() * (g * 2 + 0.25);
+			var y = this.gaussian.random() * 2 * (g+0.5);
 
 			if (y < -1 || y > 1) {
 				i--;
@@ -340,27 +354,30 @@ define(
 				continue;
 			}
 
-			var alpha = this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]) * this.settings.brightness;
-			alpha += this.seedRandom.between(0,1-alpha) * 0.5;
+			var density = this.clamp(0,this.densityArray[j],1);
+			
+			var alpha = density;//this.clamp(0, this.densityArray[j], 1) * (1 - this.darkArray[j]);
+			//alpha += this.seedRandom.between(alpha*-0.5, alpha*0.5);
 			//alpha = Math.round(alpha * 100) / 100;
 
 			if (alpha <= 0) {
 				continue;
 			}
 
-			var hue = ((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor))) % 1;
+			var hue = (this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor * (1 - this.darkArray[j]))) % 1;
+			//((this.settings.colour.h + (this.dHueArray[j] * this.settings.hueFactor))) % 1;
 			//hue = Math.round(hue * 100) / 100;
-			var saturation = this.settings.colour.s;
+			var saturation = this.settings.colour.s;// + this.seedRandom.between(this.settings.colour.s*-0.1,this.settings.colour.s*0.1);
 			//saturation = Math.round(saturation * 100) / 100;
-			var lightness = this.densityArray[j] * this.seedRandom.between(0.1, 1);
+			var lightness = density;// + this.seedRandom.between(this.densityArray[j]*-0.1, this.densityArray[j]*0.1);
 			//lightness = Math.round(lightness * 100) / 100;
-			var radius = this.seedRandom.betweenPow(0.4, 2, 4);
+			var radius = this.seedRandom.betweenPow(0.4, 2, 4.5);
 
 			ctx.setTransform(1, 0, 0, 1, realX, realY);
 
 			if (radius <= 0.5) {
-				ctx.fillStyle = getColour(hue, saturation, lightness, alpha);
-				ctx.fillRect(0, 0, 1, 1);
+				//ctx.fillStyle = getColour(hue, saturation, lightness, alpha);
+				//ctx.fillRect(0, 0, 1, 1);
 				dotCount++;
 			} else {
 				ctx.fillStyle = getRadialGradient(hue, saturation, lightness, alpha, ctx, radius);
@@ -373,7 +390,7 @@ define(
 		//NOW SPLAT!!!!
 		ctx = this.canvas.getContext("2d");
 		ctx.save();
-		ctx.globalCompositeOperation = 'lighten';
+		//ctx.globalCompositeOperation = 'lighten';
 		ctx.drawImage(starCanvas, 0, 0);
 		ctx.restore();
 

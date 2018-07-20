@@ -88,29 +88,41 @@ define(
 		//this bring it into the range -1 to +1
 		//after experimentation, found this is the usual maximum we get from the distance function.
 		//each distance function has its own range but this is real distance.
-
 		//return (da/1.4142135623730951 * 2) -1;
 
 		//in the range 0 to 1
-		return (da / 1.4142135623730951);
+		//return (da / 1.4142135623730951);
+		
+		//in the range 0 to a bit over 1
+		return (da / 1.111111);
 	}
 
 	module.FastVoronoi_F1 = FastVoronoi;
 	window.FastVoronoi = FastVoronoi;
 });
 
+//quick speed and range test...
 /*
-quick speed and range test...
-
 var max = 0.0;
+var countArray = [];
 var min = Number.MAX_SAFE_INTEGER;
+var total = 0;
 var t0 = performance.now();
 
-for (var i=0;i<5000000;i++) {
-var v = FastVoronoi(Math.random()*9007199254740990,Math.random()*9007199254740990);
-if (v>max) max =v;
-if (v<min) min =v;
+for (var i = 0; i < 5000000; i++) {
+	var v = FastVoronoi(Math.random() * 9007199254740990, Math.random() * 9007199254740990);
+	if (v > max)
+		max = v;
+	if (v < min)
+		min = v;
+	var pos = Math.floor(v * 100);
+	if (typeof countArray[pos] !== 'undefined') {
+		countArray[pos] += 1;
+	} else {
+		countArray[pos] = 1
+	}
+	total+=v;
 }
 var t1 = performance.now();
-console.log('min: ',min, 'max:',max,'Took ' + (t1 - t0) + ' milliseconds');
+console.log('min: ', min, 'max:', max, 'Average:',(total/i),'Took ' + (t1 - t0) + ' milliseconds', countArray);
 */

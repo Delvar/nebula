@@ -350,13 +350,13 @@ define(
 		this.status = Layer.Status.Processing;
 		var ctx = this.canvas.getContext("2d");
 		var count = Math.round(this.canvas.width * this.canvas.height * this.settings.brightness * 0.01);
-
+		ctx.save();
 		for (var i = 0; i < count; i++) {
 			var x = this.seedRandom.random();
 			var centeredX = x * 4 - 2;
 			//get a gaussian for the position between left @ -2 to right +2
 			var g = this.settings.gaussianMultiplier * gaussian(centeredX, 0.3989429999973527) + this.settings.gaussianMin;
-			var y = ((g * 2 * this.seedRandom.betweenPow(0.04, 1) * this.seedRandom.between(-1, 1)) / 2) + 0.5;
+			var y = ((g * this.seedRandom.between(-1, 1) )+0.5);
 
 			if (this.darkArray[Math.floor(x * this.canvas.width) + (Math.floor((y * this.canvas.height)) * this.canvas.width)] > 0.5) {
 				continue;
